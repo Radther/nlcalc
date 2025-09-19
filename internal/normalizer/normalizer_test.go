@@ -11,7 +11,7 @@ func TestNormalize(t *testing.T) {
 		{
 			name:     "written_numbers",
 			input:    "ten plus fifteen",
-			expected: "ten plus fifteen",
+			expected: "10 + 15",
 		},
 		{
 			name:     "numeric_expression",
@@ -21,7 +21,47 @@ func TestNormalize(t *testing.T) {
 		{
 			name:     "percentage",
 			input:    "20% of 100",
-			expected: "20% of 100",
+			expected: "20 * 0.01 * 100",
+		},
+		{
+			name:     "complex_expression",
+			input:    "Twenty percent of one hundred",
+			expected: "20 * 0.01 * 100",
+		},
+		{
+			name:     "complex_expression_percentage",
+			input:    "Twenty % of one hundred",
+			expected: "20 * 0.01 * 100",
+		},
+		{
+			name:     "word_operations",
+			input:    "five times three",
+			expected: "5 * 3",
+		},
+		{
+			name:     "compound_numbers",
+			input:    "two hundred plus fifty",
+			expected: "200 + 50",
+		},
+		{
+			name:     "complex_compound_numbers",
+			input:    "two hundred and fifty",
+			expected: "250",
+		},
+		{
+			name:     "very_complex_numbers",
+			input:    "one hundred and twenty seven plus three hundred forty five",
+			expected: "127 + 345",
+		},
+		{
+			name:     "thousand_numbers",
+			input:    "two thousand five hundred",
+			expected: "2500",
+		},
+		{
+			name:     "non_percentage_of",
+			input:    "ten of twenty",
+			expected: "10 of 20",
 		},
 	}
 
