@@ -22,17 +22,17 @@ func TestCLI(t *testing.T) {
 		{
 			name:     "written_numbers",
 			input:    "ten plus fifteen",
-			expected: "not implemented yet",
+			expected: "Original: ten plus fifteen\nNormalized: 10 + 15\nResult: not implemented yet",
 		},
 		{
-			name:     "numeric_expression", 
+			name:     "numeric_expression",
 			input:    "5 + 10",
-			expected: "not implemented yet",
+			expected: "Original: 5 + 10\nNormalized: 5 + 10\nResult: not implemented yet",
 		},
 		{
 			name:     "percentage",
 			input:    "20% of 100",
-			expected: "not implemented yet",
+			expected: "Original: 20% of 100\nNormalized: 20 * 0.01 * 100\nResult: not implemented yet",
 		},
 	}
 

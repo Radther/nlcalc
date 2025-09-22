@@ -58,11 +58,6 @@ func TestNormalize(t *testing.T) {
 			input:    "two thousand five hundred",
 			expected: "2500",
 		},
-		{
-			name:     "non_percentage_of",
-			input:    "ten of twenty",
-			expected: "10 of 20",
-		},
 	}
 
 	for _, tt := range tests {

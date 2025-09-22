@@ -80,9 +80,9 @@ func Normalize(input string) string {
 	result = regexp.MustCompile(`\bpercent of\b`).ReplaceAllString(result, " * 0.01 * ")
 	result = regexp.MustCompile(`\bpercentage of\b`).ReplaceAllString(result, " * 0.01 * ")
 	result = regexp.MustCompile(`% of\b`).ReplaceAllString(result, " * 0.01 * ")
-	result = regexp.MustCompile(`\bpercent\b`).ReplaceAllString(result, " * 0.01")
-	result = regexp.MustCompile(`\bpercentage\b`).ReplaceAllString(result, " * 0.01")
-	result = regexp.MustCompile(`%`).ReplaceAllString(result, " * 0.01")
+	result = regexp.MustCompile(`\bpercent\b`).ReplaceAllString(result, " * 0.01 * ")
+	result = regexp.MustCompile(`\bpercentage\b`).ReplaceAllString(result, " * 0.01 * ")
+	result = regexp.MustCompile(`%`).ReplaceAllString(result, " * 0.01 * ")
 
 	operationMap := map[string]string{
 		"plus":       " + ",
@@ -109,9 +109,6 @@ func Normalize(input string) string {
 		}
 		return match
 	})
-
-	result = regexp.MustCompile(`(\d+)of`).ReplaceAllString(result, "$1 of")
-	result = regexp.MustCompile(`of(\d+)`).ReplaceAllString(result, "of $1")
 
 	result = regexp.MustCompile(`\s+`).ReplaceAllString(result, " ")
 	result = strings.TrimSpace(result)
