@@ -14,9 +14,24 @@ func TestClean(t *testing.T) {
 			expected: "10 + 15",
 		},
 		{
-			name:     "with_articles",
-			input:    "the sum of ten and fifteen",
-			expected: "the sum of ten and fifteen",
+			name:     "remove_articles_and_words",
+			input:    "the sum of 10 + 15",
+			expected: "10 + 15",
+		},
+		{
+			name:     "remove_filler_words",
+			input:    "what is 10 + 15",
+			expected: "10 + 15",
+		},
+		{
+			name:     "complex_percentage",
+			input:    "20 * 0.01 * 100",
+			expected: "20 * 0.01 * 100",
+		},
+		{
+			name:     "preserve_decimal_numbers",
+			input:    "5 * 3.14",
+			expected: "5 * 3.14",
 		},
 	}
 

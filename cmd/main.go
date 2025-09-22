@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"mathparser/internal/cleaner"
 	"mathparser/internal/normalizer"
 	"os"
 	"strings"
@@ -31,8 +32,10 @@ func main() {
 	}
 
 	normalized := normalizer.Normalize(input)
-	
+	cleaned := cleaner.Clean(normalized)
+
 	fmt.Printf("Original: %s\n", input)
 	fmt.Printf("Normalized: %s\n", normalized)
+	fmt.Printf("Cleaned: %s\n", cleaned)
 	fmt.Println("Result: not implemented yet")
 }
