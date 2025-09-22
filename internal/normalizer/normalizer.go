@@ -44,6 +44,9 @@ var scaleWords = map[string]int{
 	"billion":  1000000000,
 }
 
+// Compile regex patterns once at package level
+var individualWordPattern = regexp.MustCompile(`\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero)\b`)
+
 func parseNumberPhrase(phrase string) (int, bool) {
 	words := strings.Fields(strings.ToLower(phrase))
 	if len(words) == 0 {
@@ -150,24 +153,24 @@ func Normalize(input string) string {
 		result = re.ReplaceAllString(result, symbol)
 	}
 
-	// First try compound numbers, then individual number words
-	compoundPattern := regexp.MustCompile(`\b(?:(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|zero|and)\s*)+\b`)
+	// Single number pattern - handles both compound and individual numbers
+	numberPattern := regexp.MustCompile(`\b(?:(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|zero|and)\s*)+\b`)
 
-	result = compoundPattern.ReplaceAllStringFunc(result, func(match string) string {
+	result = numberPattern.ReplaceAllStringFunc(result, func(match string) string {
+		// Try compound number parsing first (handles complex cases and validation)
 		if num, ok := parseNumberPhrase(match); ok {
 			return strconv.Itoa(num)
 		}
-		return match
-	})
 
-	// Then handle individual number words that weren't part of compounds
-	individualPattern := regexp.MustCompile(`\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero)\b`)
-
-	result = individualPattern.ReplaceAllStringFunc(result, func(match string) string {
-		if val, exists := numberWords[match]; exists {
-			return strconv.Itoa(val)
-		}
-		return match
+		// If compound parsing fails, convert individual words within the match
+		// This handles cases like "five and ten" where compound parsing fails due to invalid "and"
+		// but individual words should still be converted to "5 and 10"
+		return individualWordPattern.ReplaceAllStringFunc(match, func(word string) string {
+			if val, exists := numberWords[word]; exists {
+				return strconv.Itoa(val)
+			}
+			return word
+		})
 	})
 
 	result = regexp.MustCompile(`\s+`).ReplaceAllString(result, " ")
