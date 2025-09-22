@@ -37,13 +37,25 @@ var numberWords = map[string]int{
 	"ninety":    90,
 }
 
+var scaleWords = map[string]int{
+	"hundred":  100,
+	"thousand": 1000,
+	"million":  1000000,
+	"billion":  1000000000,
+}
+
 func parseNumberPhrase(phrase string) (int, bool) {
 	words := strings.Fields(strings.ToLower(phrase))
 	if len(words) == 0 {
 		return 0, false
 	}
 
-	total := 0
+	// Check for invalid "and" usage (connecting same-level numbers)
+	if !isValidAndUsage(words) {
+		return 0, false
+	}
+
+	result := 0
 	current := 0
 
 	for _, word := range words {
@@ -51,19 +63,19 @@ func parseNumberPhrase(phrase string) (int, bool) {
 			continue
 		}
 
-		if word == "hundred" {
+		if scale, isScale := scaleWords[word]; isScale {
 			if current == 0 {
 				current = 1
 			}
-			current *= 100
-			total += current
-			current = 0
-		} else if word == "thousand" {
-			if current == 0 {
-				current = 1
+
+			if scale == 100 {
+				// hundred: multiply current by 100
+				current *= 100
+			} else if scale >= 1000 {
+				// For thousand, million, billion: add to result and reset current
+				result += current * scale
+				current = 0
 			}
-			total = (total + current) * 1000
-			current = 0
 		} else if val, exists := numberWords[word]; exists {
 			current += val
 		} else {
@@ -71,7 +83,44 @@ func parseNumberPhrase(phrase string) (int, bool) {
 		}
 	}
 
-	return total + current, true
+	return result + current, true
+}
+
+// isValidAndUsage checks if "and" is used correctly in compound numbers
+func isValidAndUsage(words []string) bool {
+	for i, word := range words {
+		if word == "and" {
+			// "and" must follow a scale word (hundred, thousand, etc.)
+			if i == 0 {
+				return false // "and" at beginning is invalid
+			}
+
+			prevWord := words[i-1]
+			// Check if previous word is a scale word
+			if _, isScale := scaleWords[prevWord]; !isScale {
+				// If not a scale word, check if it's a number that could be part of a scale
+				// e.g., "twenty" in "one hundred twenty and five" is valid
+				// but "ten and fifteen" is not valid
+				return hasRecentScaleContext(words, i)
+			}
+		}
+	}
+	return true
+}
+
+// hasRecentScaleContext checks if there's a scale word in recent context
+func hasRecentScaleContext(words []string, andPos int) bool {
+	// Look backwards for a scale word
+	for i := andPos - 1; i >= 0; i-- {
+		if _, isScale := scaleWords[words[i]]; isScale {
+			return true
+		}
+		// If we hit another "and" or go too far back, no valid context
+		if words[i] == "and" || i < andPos-3 {
+			break
+		}
+	}
+	return false
 }
 
 func Normalize(input string) string {
@@ -101,11 +150,22 @@ func Normalize(input string) string {
 		result = re.ReplaceAllString(result, symbol)
 	}
 
-	numberPattern := regexp.MustCompile(`\b(?:(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|zero|and)\s*)+\b`)
+	// First try compound numbers, then individual number words
+	compoundPattern := regexp.MustCompile(`\b(?:(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|zero|and)\s*)+\b`)
 
-	result = numberPattern.ReplaceAllStringFunc(result, func(match string) string {
+	result = compoundPattern.ReplaceAllStringFunc(result, func(match string) string {
 		if num, ok := parseNumberPhrase(match); ok {
 			return strconv.Itoa(num)
+		}
+		return match
+	})
+
+	// Then handle individual number words that weren't part of compounds
+	individualPattern := regexp.MustCompile(`\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero)\b`)
+
+	result = individualPattern.ReplaceAllStringFunc(result, func(match string) string {
+		if val, exists := numberWords[match]; exists {
+			return strconv.Itoa(val)
 		}
 		return match
 	})

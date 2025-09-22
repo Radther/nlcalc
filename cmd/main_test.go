@@ -22,17 +22,32 @@ func TestCLI(t *testing.T) {
 		{
 			name:     "written_numbers",
 			input:    "ten plus fifteen",
-			expected: "Original: ten plus fifteen\nNormalized: 10 + 15\nResult: not implemented yet",
+			expected: "Original: ten plus fifteen\nNormalized: 10 + 15\nCleaned: 10 + 15\nResult: not implemented yet",
 		},
 		{
 			name:     "numeric_expression",
 			input:    "5 + 10",
-			expected: "Original: 5 + 10\nNormalized: 5 + 10\nResult: not implemented yet",
+			expected: "Original: 5 + 10\nNormalized: 5 + 10\nCleaned: 5 + 10\nResult: not implemented yet",
 		},
 		{
 			name:     "percentage",
 			input:    "20% of 100",
-			expected: "Original: 20% of 100\nNormalized: 20 * 0.01 * 100\nResult: not implemented yet",
+			expected: "Original: 20% of 100\nNormalized: 20 * 0.01 * 100\nCleaned: 20 * 0.01 * 100\nResult: not implemented yet",
+		},
+		{
+			name:     "invalid_and_usage",
+			input:    "the sum of fifteen and ten",
+			expected: "Original: the sum of fifteen and ten\nNormalized: the sum of 15 and 10\nCleaned: 15 10\nResult: not implemented yet",
+		},
+		{
+			name:     "valid_compound_number",
+			input:    "one hundred and twenty seven",
+			expected: "Original: one hundred and twenty seven\nNormalized: 127\nCleaned: 127\nResult: not implemented yet",
+		},
+		{
+			name:     "complex_billion",
+			input:    "five billion three hundred million and twenty",
+			expected: "Original: five billion three hundred million and twenty\nNormalized: 5300000020\nCleaned: 5300000020\nResult: not implemented yet",
 		},
 	}
 
