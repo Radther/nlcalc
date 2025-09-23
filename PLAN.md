@@ -23,6 +23,11 @@ The parsing system will follow a multi-stage pipeline:
 4. **Tokenization** - Convert cleaned string to mathematical tokens
 5. **Expression Evaluation** - Calculate the final result
 
+## Commands
+
+- Build: `go build -o mathparser cmd/main.go`
+- Test full suite: `go test ./...`
+
 ## Stages of Implementation
 
 ### Stage 1: Basic CLI Setup

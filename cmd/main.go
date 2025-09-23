@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"mathparser/internal/cleaner"
+	"mathparser/internal/evaluator"
 	"mathparser/internal/normalizer"
 	"mathparser/internal/tokenizer"
 	"os"
@@ -50,5 +51,12 @@ func main() {
 		tokenStrings[i] = token.String()
 	}
 	fmt.Printf("Tokens: [%s]\n", strings.Join(tokenStrings, ", "))
-	fmt.Println("Result: not implemented yet")
+
+	result, err := evaluator.Evaluate(tokens)
+	if err != nil {
+		fmt.Printf("Evaluation error: %s\n", err)
+		return
+	}
+
+	fmt.Printf("Result: %g\n", result)
 }

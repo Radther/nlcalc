@@ -22,17 +22,17 @@ func TestCLI(t *testing.T) {
 		{
 			name:     "written_numbers",
 			input:    "ten plus fifteen",
-			expected: "Original: ten plus fifteen\nNormalized: 10 + 15\nCleaned: 10 + 15\nTokens: [NUMBER(10), OPERATOR(+), NUMBER(15)]\nResult: not implemented yet",
+			expected: "Original: ten plus fifteen\nNormalized: 10 + 15\nCleaned: 10 + 15\nTokens: [NUMBER(10), OPERATOR(+), NUMBER(15)]\nResult: 25",
 		},
 		{
 			name:     "numeric_expression",
 			input:    "5 + 10",
-			expected: "Original: 5 + 10\nNormalized: 5 + 10\nCleaned: 5 + 10\nTokens: [NUMBER(5), OPERATOR(+), NUMBER(10)]\nResult: not implemented yet",
+			expected: "Original: 5 + 10\nNormalized: 5 + 10\nCleaned: 5 + 10\nTokens: [NUMBER(5), OPERATOR(+), NUMBER(10)]\nResult: 15",
 		},
 		{
 			name:     "percentage",
 			input:    "20% of 100",
-			expected: "Original: 20% of 100\nNormalized: 20 * 0.01 * 100\nCleaned: 20 * 0.01 * 100\nTokens: [NUMBER(20), OPERATOR(*), NUMBER(0.01), OPERATOR(*), NUMBER(100)]\nResult: not implemented yet",
+			expected: "Original: 20% of 100\nNormalized: 20 * 0.01 * 100\nCleaned: 20 * 0.01 * 100\nTokens: [NUMBER(20), OPERATOR(*), NUMBER(0.01), OPERATOR(*), NUMBER(100)]\nResult: 20",
 		},
 		{
 			name:     "invalid_and_usage",
@@ -42,12 +42,12 @@ func TestCLI(t *testing.T) {
 		{
 			name:     "valid_compound_number",
 			input:    "one hundred and twenty seven",
-			expected: "Original: one hundred and twenty seven\nNormalized: 127\nCleaned: 127\nTokens: [NUMBER(127)]\nResult: not implemented yet",
+			expected: "Original: one hundred and twenty seven\nNormalized: 127\nCleaned: 127\nTokens: [NUMBER(127)]\nResult: 127",
 		},
 		{
 			name:     "complex_billion",
 			input:    "five billion three hundred million and twenty",
-			expected: "Original: five billion three hundred million and twenty\nNormalized: 5300000020\nCleaned: 5300000020\nTokens: [NUMBER(5300000020)]\nResult: not implemented yet",
+			expected: "Original: five billion three hundred million and twenty\nNormalized: 5300000020\nCleaned: 5300000020\nTokens: [NUMBER(5300000020)]\nResult: 5.30000002e+09",
 		},
 	}
 

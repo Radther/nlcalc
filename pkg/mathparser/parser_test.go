@@ -11,17 +11,17 @@ func TestParse(t *testing.T) {
 		{
 			name:     "written_numbers",
 			input:    "ten plus fifteen",
-			expected: 0.0,
+			expected: 25.0,
 		},
 		{
 			name:     "numeric_expression",
 			input:    "5 + 10",
-			expected: 0.0,
+			expected: 15.0,
 		},
 		{
 			name:     "percentage",
 			input:    "20% of 100",
-			expected: 0.0,
+			expected: 20.0,
 		},
 	}
 
