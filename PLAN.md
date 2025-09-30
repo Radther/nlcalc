@@ -25,7 +25,7 @@ The parsing system will follow a multi-stage pipeline:
 
 ## Commands
 
-- Build: `go build -o mathparser cmd/main.go`
+- Build: `go build -o nlcalc cmd/main.go`
 - Test full suite: `go test ./...`
 
 ## Stages of Implementation
@@ -48,9 +48,9 @@ Output: "not implemented yet"
 
 **Test Cases**:
 ```bash
-./mathparser "ten plus fifteen"  # Output: not implemented yet
-./mathparser "5 + 10"           # Output: not implemented yet
-echo "invalid" | ./mathparser   # Output: not implemented yet
+./nlcalc "ten plus fifteen"  # Output: not implemented yet
+./nlcalc "5 + 10"           # Output: not implemented yet
+echo "invalid" | ./nlcalc   # Output: not implemented yet
 ```
 
 ### Stage 2: Text Normalization
@@ -193,7 +193,7 @@ Result: 25
 ## Module Structure
 
 ```
-mathparser/
+nlcalc/
 ├── cmd/
 │   └── main.go              # CLI entry point
 ├── internal/

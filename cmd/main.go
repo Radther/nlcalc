@@ -3,10 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"mathparser/internal/cleaner"
-	"mathparser/internal/evaluator"
-	"mathparser/internal/normalizer"
-	"mathparser/internal/tokenizer"
+	"nlcalc/internal/cleaner"
+	"nlcalc/internal/evaluator"
+	"nlcalc/internal/normalizer"
+	"nlcalc/internal/tokenizer"
 	"os"
 	"strings"
 )

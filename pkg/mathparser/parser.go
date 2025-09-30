@@ -1,10 +1,10 @@
 package mathparser
 
 import (
-	"mathparser/internal/cleaner"
-	"mathparser/internal/evaluator"
-	"mathparser/internal/normalizer"
-	"mathparser/internal/tokenizer"
+	"nlcalc/internal/cleaner"
+	"nlcalc/internal/evaluator"
+	"nlcalc/internal/normalizer"
+	"nlcalc/internal/tokenizer"
 )
 
 func Parse(input string) (float64, error) {
