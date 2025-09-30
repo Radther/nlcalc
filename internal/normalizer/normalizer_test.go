@@ -62,7 +62,74 @@ func TestNormalize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Normalize(tt.input)
+			result := Normalize(tt.input, nil)
+			if result != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestNormalizeWithVariables(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		variables map[string]float64
+		expected  string
+	}{
+		{
+			name:      "single_variable",
+			input:     "x plus five",
+			variables: map[string]float64{"x": 10},
+			expected:  "10 + 5",
+		},
+		{
+			name:      "multiple_variables",
+			input:     "price plus tax",
+			variables: map[string]float64{"price": 100, "tax": 15},
+			expected:  "100 + 15",
+		},
+		{
+			name:      "overlapping_variable_names",
+			input:     "x plus xx",
+			variables: map[string]float64{"x": 5, "xx": 10},
+			expected:  "5 + 10",
+		},
+		{
+			name:      "variable_with_operations",
+			input:     "price times quantity",
+			variables: map[string]float64{"price": 25.5, "quantity": 3},
+			expected:  "25.5 * 3",
+		},
+		{
+			name:      "case_insensitive_variables",
+			input:     "Price PLUS Tax",
+			variables: map[string]float64{"price": 100, "tax": 20},
+			expected:  "100 + 20",
+		},
+		{
+			name:      "variable_not_partial_match",
+			input:     "price plus pricey",
+			variables: map[string]float64{"price": 100},
+			expected:  "100 + pricey",
+		},
+		{
+			name:      "empty_variables_map",
+			input:     "ten plus five",
+			variables: map[string]float64{},
+			expected:  "10 + 5",
+		},
+		{
+			name:      "variable_with_decimal",
+			input:     "rate times hundred",
+			variables: map[string]float64{"rate": 0.15},
+			expected:  "0.15 * 100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Normalize(tt.input, tt.variables)
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}

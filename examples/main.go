@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	result, err := nlcalc.Parse("ten plus fifteen")
+	result, err := nlcalc.Parse("ten plus fifteen", nil)
 	if err != nil {
 		log.Fatal(err)
 	}

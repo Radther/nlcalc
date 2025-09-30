@@ -5,6 +5,7 @@ package normalizer
 
 import (
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -129,12 +130,45 @@ func hasRecentScaleContext(words []string, andPos int) bool {
 	return false
 }
 
+// replaceVariables replaces variable names in the input string with their numeric values.
+// Variables are sorted by length (descending) to ensure longer variable names are replaced first,
+// preventing partial replacements (e.g., "xx" should not become "valuex" when both "x" and "xx" exist).
+// Uses word boundaries to ensure variables match complete words only.
+func replaceVariables(input string, variables map[string]float64) string {
+	if len(variables) == 0 {
+		return input
+	}
+
+	// Sort variable names by length (descending) to replace longest first
+	varNames := make([]string, 0, len(variables))
+	for name := range variables {
+		varNames = append(varNames, name)
+	}
+	sort.Slice(varNames, func(i, j int) bool {
+		return len(varNames[i]) > len(varNames[j])
+	})
+
+	result := input
+	for _, name := range varNames {
+		value := variables[name]
+		// Use word boundaries to match complete variable names only
+		pattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(name) + `\b`)
+		result = pattern.ReplaceAllString(result, strconv.FormatFloat(value, 'f', -1, 64))
+	}
+
+	return result
+}
+
 // Normalize converts a raw input string into a normalized mathematical expression.
 // It transforms written numbers ("ten" → "10"), operation words ("plus" → "+"),
 // and percentage notations ("20% of" → "* 0.01 *") into symbolic form.
+// Variables from the optional map are replaced with their numeric values before other transformations.
 // Returns a normalized string ready for cleaning and tokenization.
-func Normalize(input string) string {
+func Normalize(input string, variables map[string]float64) string {
 	result := strings.ToLower(input)
+
+	// Replace variables first, before other transformations
+	result = replaceVariables(result, variables)
 
 	result = regexp.MustCompile(`\bpercent of\b`).ReplaceAllString(result, " * 0.01 * ")
 	result = regexp.MustCompile(`\bpercentage of\b`).ReplaceAllString(result, " * 0.01 * ")

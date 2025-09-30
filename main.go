@@ -38,7 +38,7 @@ func main() {
 		return
 	}
 
-	normalized := normalizer.Normalize(input)
+	normalized := normalizer.Normalize(input, nil)
 	cleaned := cleaner.Clean(normalized)
 	tokens, err := tokenizer.Tokenize(cleaned)
 
