@@ -59,10 +59,10 @@ echo "5 + 10" | nlcalc
 Use the `--verbose` flag to see the processing pipeline stages:
 
 ```bash
-nlcalc --verbose "ten plus fifteen"
+nlcalc --verbose "what is ten plus fifteen"
 # Output:
-# Original: ten plus fifteen
-# Normalized: 10 + 15
+# Original: what is ten plus fifteen
+# Normalized: what is 10 + 15
 # Cleaned: 10 + 15
 # Tokens: [NUMBER(10), OPERATOR(+), NUMBER(15)]
 # Result: 25
