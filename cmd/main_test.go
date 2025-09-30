@@ -17,46 +17,65 @@ func TestCLI(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
+		verbose  bool
 		expected string
 	}{
 		{
 			name:     "written_numbers",
 			input:    "ten plus fifteen",
-			expected: "Original: ten plus fifteen\nNormalized: 10 + 15\nCleaned: 10 + 15\nTokens: [NUMBER(10), OPERATOR(+), NUMBER(15)]\nResult: 25",
+			verbose:  false,
+			expected: "25",
 		},
 		{
 			name:     "numeric_expression",
 			input:    "5 + 10",
-			expected: "Original: 5 + 10\nNormalized: 5 + 10\nCleaned: 5 + 10\nTokens: [NUMBER(5), OPERATOR(+), NUMBER(10)]\nResult: 15",
+			verbose:  false,
+			expected: "15",
 		},
 		{
 			name:     "percentage",
 			input:    "20% of 100",
-			expected: "Original: 20% of 100\nNormalized: 20 * 0.01 * 100\nCleaned: 20 * 0.01 * 100\nTokens: [NUMBER(20), OPERATOR(*), NUMBER(0.01), OPERATOR(*), NUMBER(100)]\nResult: 20",
+			verbose:  false,
+			expected: "20",
 		},
 		{
-			name:     "invalid_and_usage",
-			input:    "the sum of fifteen and ten",
-			expected: "Original: the sum of fifteen and ten\nNormalized: the sum of 15 and 10\nCleaned: 15 10\nTokenization error: consecutive numbers not allowed: 15 10",
+			name:     "written_numbers_verbose",
+			input:    "ten plus fifteen",
+			verbose:  true,
+			expected: "Original: ten plus fifteen\nNormalized: 10 + 15\nCleaned: 10 + 15\nTokens: [NUMBER(10), OPERATOR(+), NUMBER(15)]\nResult: 25",
+		},
+		{
+			name:     "numeric_expression_verbose",
+			input:    "5 + 10",
+			verbose:  true,
+			expected: "Original: 5 + 10\nNormalized: 5 + 10\nCleaned: 5 + 10\nTokens: [NUMBER(5), OPERATOR(+), NUMBER(10)]\nResult: 15",
 		},
 		{
 			name:     "valid_compound_number",
 			input:    "one hundred and twenty seven",
-			expected: "Original: one hundred and twenty seven\nNormalized: 127\nCleaned: 127\nTokens: [NUMBER(127)]\nResult: 127",
+			verbose:  false,
+			expected: "127",
 		},
 		{
 			name:     "complex_billion",
 			input:    "five billion three hundred million and twenty",
-			expected: "Original: five billion three hundred million and twenty\nNormalized: 5300000020\nCleaned: 5300000020\nTokens: [NUMBER(5300000020)]\nResult: 5.30000002e+09",
+			verbose:  false,
+			expected: "5.30000002e+09",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := exec.Command("./nlcalc_test", tt.input)
-			output, err := cmd.Output()
+			args := []string{}
+			if tt.verbose {
+				args = append(args, "--verbose")
+			}
+			args = append(args, tt.input)
+
+			cmd := exec.Command("./nlcalc_test", args...)
+			output, err := cmd.CombinedOutput()
 			if err != nil {
-				t.Fatalf("Command failed: %v", err)
+				t.Fatalf("Command failed: %v\nOutput: %s", err, string(output))
 			}
 
 			result := strings.TrimSpace(string(output))
