@@ -1,3 +1,6 @@
+// Package normalizer converts written numbers and operation words into mathematical symbols.
+// It handles number words (e.g., "ten", "twenty five"), operation words (e.g., "plus", "minus"),
+// and percentage expressions (e.g., "20% of", "percent of") as part of the nlcalc parsing pipeline.
 package normalizer
 
 import (
@@ -126,6 +129,10 @@ func hasRecentScaleContext(words []string, andPos int) bool {
 	return false
 }
 
+// Normalize converts a raw input string into a normalized mathematical expression.
+// It transforms written numbers ("ten" → "10"), operation words ("plus" → "+"),
+// and percentage notations ("20% of" → "* 0.01 *") into symbolic form.
+// Returns a normalized string ready for cleaning and tokenization.
 func Normalize(input string) string {
 	result := strings.ToLower(input)
 

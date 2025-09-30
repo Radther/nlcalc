@@ -1,3 +1,4 @@
+// Package tokenizer converts cleaned mathematical expressions into tokens for evaluation.
 package tokenizer
 
 import (
@@ -7,17 +8,22 @@ import (
 	"strings"
 )
 
+// TokenType represents the category of a mathematical token.
 type TokenType string
 
 const (
-	NUMBER     TokenType = "NUMBER"
-	OPERATOR   TokenType = "OPERATOR"
+	// NUMBER represents numeric values (integers and decimals).
+	NUMBER TokenType = "NUMBER"
+	// OPERATOR represents mathematical operators (+, -, *, /).
+	OPERATOR TokenType = "OPERATOR"
+	// PARENTHESIS represents grouping symbols (parentheses).
 	PARENTHESIS TokenType = "PARENTHESIS"
 )
 
+// Token represents a single parsed element of a mathematical expression.
 type Token struct {
-	Type  TokenType
-	Value string
+	Type  TokenType // The category of the token
+	Value string    // The string value of the token
 }
 
 func (t Token) String() string {
@@ -31,6 +37,11 @@ var (
 	whitespacePattern = regexp.MustCompile(`\s+`)
 )
 
+// Tokenize parses a cleaned mathematical expression string into a slice of tokens.
+// It validates that numbers are valid, operators are recognized, and the token
+// sequence is syntactically correct (e.g., no consecutive operators or numbers).
+// Returns an error if the input is empty, contains unrecognized characters, or
+// has an invalid token sequence.
 func Tokenize(input string) ([]Token, error) {
 	if strings.TrimSpace(input) == "" {
 		return nil, fmt.Errorf("empty input")

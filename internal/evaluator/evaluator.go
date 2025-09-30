@@ -1,3 +1,6 @@
+// Package evaluator calculates the final result from a sequence of mathematical tokens.
+// It implements standard order of operations (PEMDAS/BODMAS), handling parentheses,
+// multiplication, division, addition, and subtraction with proper precedence.
 package evaluator
 
 import (
@@ -7,6 +10,14 @@ import (
 	"github.com/radther/nlcalc/internal/tokenizer"
 )
 
+// Evaluate calculates the result of a mathematical expression represented as tokens.
+// It follows standard order of operations (PEMDAS/BODMAS):
+//   - Parentheses (evaluated from innermost to outermost)
+//   - Multiplication and Division (left to right)
+//   - Addition and Subtraction (left to right)
+//
+// Returns an error if the expression is empty, invalid, has mismatched parentheses,
+// or attempts division by zero.
 func Evaluate(tokens []tokenizer.Token) (float64, error) {
 	if len(tokens) == 0 {
 		return 0.0, errors.New("empty expression")

@@ -1,3 +1,5 @@
+// Package cleaner removes filler words and non-mathematical text from normalized expressions.
+// It extracts only valid mathematical tokens (numbers, operators, parentheses) from the input.
 package cleaner
 
 import (
@@ -5,6 +7,10 @@ import (
 	"strings"
 )
 
+// Clean removes all non-mathematical text from a normalized expression.
+// It extracts and preserves only numbers, operators (+, -, *, /), parentheses,
+// and percentage conversion tokens. Filler words like "what is" are removed.
+// Returns a cleaned string containing only mathematical tokens, ready for tokenization.
 func Clean(input string) string {
 	// Define what constitutes valid mathematical tokens
 	// Numbers (including decimals), operators, and parentheses
