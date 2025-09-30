@@ -7,13 +7,7 @@ A Go CLI tool and package that parses natural language math expressions and retu
 Install using `go install`:
 
 ```bash
-go install github.com/radther/nlcalc/cmd@latest
-```
-
-This will install the `cmd` binary. You can rename it after installation if desired:
-
-```bash
-mv $(go env GOPATH)/bin/cmd $(go env GOPATH)/bin/nlcalc
+go install github.com/radther/nlcalc@latest
 ```
 
 Or build from source:

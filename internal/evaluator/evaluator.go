@@ -2,8 +2,9 @@ package evaluator
 
 import (
 	"errors"
-	"nlcalc/internal/tokenizer"
 	"strconv"
+
+	"github.com/radther/nlcalc/internal/tokenizer"
 )
 
 func Evaluate(tokens []tokenizer.Token) (float64, error) {

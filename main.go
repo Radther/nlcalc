@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"nlcalc/internal/cleaner"
-	"nlcalc/internal/evaluator"
-	"nlcalc/internal/normalizer"
-	"nlcalc/internal/tokenizer"
 	"os"
 	"strings"
+
+	"github.com/radther/nlcalc/internal/cleaner"
+	"github.com/radther/nlcalc/internal/evaluator"
+	"github.com/radther/nlcalc/internal/normalizer"
+	"github.com/radther/nlcalc/internal/tokenizer"
 )
 
 func main() {

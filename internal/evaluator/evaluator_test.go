@@ -1,9 +1,10 @@
 package evaluator
 
 import (
-	"nlcalc/internal/tokenizer"
 	"math"
 	"testing"
+
+	"github.com/radther/nlcalc/internal/tokenizer"
 )
 
 func TestEvaluate(t *testing.T) {
