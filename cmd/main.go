@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"nlcalc/internal/cleaner"
 	"nlcalc/internal/evaluator"
@@ -12,10 +13,13 @@ import (
 )
 
 func main() {
+	verbose := flag.Bool("verbose", false, "Show detailed pipeline stages")
+	flag.Parse()
+
 	var input string
 
-	if len(os.Args) > 1 {
-		input = strings.Join(os.Args[1:], " ")
+	if flag.NArg() > 0 {
+		input = strings.Join(flag.Args(), " ")
 	} else {
 		scanner := bufio.NewScanner(os.Stdin)
 		if scanner.Scan() {
@@ -37,26 +41,34 @@ func main() {
 	cleaned := cleaner.Clean(normalized)
 	tokens, err := tokenizer.Tokenize(cleaned)
 
-	fmt.Printf("Original: %s\n", input)
-	fmt.Printf("Normalized: %s\n", normalized)
-	fmt.Printf("Cleaned: %s\n", cleaned)
+	if *verbose {
+		fmt.Printf("Original: %s\n", input)
+		fmt.Printf("Normalized: %s\n", normalized)
+		fmt.Printf("Cleaned: %s\n", cleaned)
+	}
 
 	if err != nil {
-		fmt.Printf("Tokenization error: %s\n", err)
-		return
+		fmt.Fprintf(os.Stderr, "Tokenization error: %s\n", err)
+		os.Exit(1)
 	}
 
-	tokenStrings := make([]string, len(tokens))
-	for i, token := range tokens {
-		tokenStrings[i] = token.String()
+	if *verbose {
+		tokenStrings := make([]string, len(tokens))
+		for i, token := range tokens {
+			tokenStrings[i] = token.String()
+		}
+		fmt.Printf("Tokens: [%s]\n", strings.Join(tokenStrings, ", "))
 	}
-	fmt.Printf("Tokens: [%s]\n", strings.Join(tokenStrings, ", "))
 
 	result, err := evaluator.Evaluate(tokens)
 	if err != nil {
-		fmt.Printf("Evaluation error: %s\n", err)
-		return
+		fmt.Fprintf(os.Stderr, "Evaluation error: %s\n", err)
+		os.Exit(1)
 	}
 
-	fmt.Printf("Result: %g\n", result)
+	if *verbose {
+		fmt.Printf("Result: %g\n", result)
+	} else {
+		fmt.Printf("%g\n", result)
+	}
 }
