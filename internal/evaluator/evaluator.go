@@ -2,7 +2,7 @@ package evaluator
 
 import (
 	"errors"
-	"mathparser/internal/tokenizer"
+	"nlcalc/internal/tokenizer"
 	"strconv"
 )
 

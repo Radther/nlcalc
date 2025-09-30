@@ -1,7 +1,7 @@
 package evaluator
 
 import (
-	"mathparser/internal/tokenizer"
+	"nlcalc/internal/tokenizer"
 	"math"
 	"testing"
 )

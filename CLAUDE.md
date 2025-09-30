@@ -26,7 +26,7 @@ The parser follows a multi-stage pipeline architecture:
 
 4. **Evaluation** (`internal/evaluator`) - Calculates final result following PEMDAS/BODMAS order of operations.
 
-The public API is exposed through `pkg/mathparser/parser.go` with a single `Parse(input string) (float64, error)` function that runs the complete pipeline.
+The public API is exposed through `pkg/nlcalc/parser.go` with a single `Parse(input string) (float64, error)` function that runs the complete pipeline.
 
 The CLI (`cmd/main.go`) provides progressive output showing each pipeline stage for debugging and transparency.
 

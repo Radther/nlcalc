@@ -206,7 +206,7 @@ nlcalc/
 │   └── evaluator/
 │       └── evaluator.go     # Expression evaluation
 ├── pkg/
-│   └── mathparser/
+│   └── nlcalc/
 │       └── parser.go        # Public API
 ├── go.mod
 ├── go.sum

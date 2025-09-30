@@ -8,11 +8,11 @@ import (
 )
 
 func TestCLI(t *testing.T) {
-	buildCmd := exec.Command("go", "build", "-o", "mathparser_test", ".")
+	buildCmd := exec.Command("go", "build", "-o", "nlcalc_test", ".")
 	if err := buildCmd.Run(); err != nil {
 		t.Fatalf("Failed to build CLI: %v", err)
 	}
-	defer os.Remove("mathparser_test")
+	defer os.Remove("nlcalc_test")
 
 	tests := []struct {
 		name     string
@@ -53,7 +53,7 @@ func TestCLI(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := exec.Command("./mathparser_test", tt.input)
+			cmd := exec.Command("./nlcalc_test", tt.input)
 			output, err := cmd.Output()
 			if err != nil {
 				t.Fatalf("Command failed: %v", err)
