@@ -48,8 +48,79 @@ var scaleWords = map[string]int{
 	"billion":  1000000000,
 }
 
-// Compile regex patterns once at package level
-var individualWordPattern = regexp.MustCompile(`\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|zero)\b`)
+// buildNumberWordsPattern creates a regex pattern from map keys
+func buildNumberWordsPattern(words map[string]int) string {
+	keys := make([]string, 0, len(words))
+	for word := range words {
+		keys = append(keys, word)
+	}
+	sort.Strings(keys) // Sort for deterministic pattern
+	return `\b(?:` + strings.Join(keys, "|") + `)\b`
+}
+
+// buildCompoundNumberPattern creates a regex pattern for compound numbers
+func buildCompoundNumberPattern() string {
+	allWords := make([]string, 0, len(numberWords)+len(scaleWords)+1)
+	for word := range numberWords {
+		allWords = append(allWords, word)
+	}
+	for word := range scaleWords {
+		allWords = append(allWords, word)
+	}
+	allWords = append(allWords, "and")
+	sort.Strings(allWords) // Sort for deterministic pattern
+	return `\b(?:(?:` + strings.Join(allWords, "|") + `)\s*)+\b`
+}
+
+// Compile regex patterns once at package level - built from maps for single source of truth
+var individualWordPattern = regexp.MustCompile(buildNumberWordsPattern(numberWords))
+
+// Pre-compiled regexes for percentage operations
+var (
+	percentageRegex = regexp.MustCompile(`\bpercentage\b`)
+	percentRegex    = regexp.MustCompile(`\bpercent\b`)
+	percentSymbol   = regexp.MustCompile(`%`)
+)
+
+// Pre-compiled regexes for power operations
+var (
+	raisedToThePowerOfRegex = regexp.MustCompile(`\braised to the power of\b`)
+	squaredRegex            = regexp.MustCompile(`\bsquared\b`)
+	cubedRegex              = regexp.MustCompile(`\bcubed\b`)
+	raisedRegex             = regexp.MustCompile(`\braised\b`)
+	powerRegex              = regexp.MustCompile(`\bpower\b`)
+)
+
+// Pre-compiled regexes for function operations
+var (
+	naturalLogarithmRegex = regexp.MustCompile(`\bnatural logarithm\b`)
+	squareRootRegex       = regexp.MustCompile(`\bsquare root\b`)
+	squarerootRegex       = regexp.MustCompile(`\bsquareroot\b`)
+	absoluteRegex         = regexp.MustCompile(`\babsolute\b`)
+	logarithmRegex        = regexp.MustCompile(`\blogarithm\b`)
+	sineRegex             = regexp.MustCompile(`\bsine\b`)
+	cosineRegex           = regexp.MustCompile(`\bcosine\b`)
+	tangentRegex          = regexp.MustCompile(`\btangent\b`)
+)
+
+// Pre-compiled regexes for basic operations
+var (
+	plusRegex      = regexp.MustCompile(`\bplus\b`)
+	addRegex       = regexp.MustCompile(`\badd\b`)
+	addedToRegex   = regexp.MustCompile(`\badded to\b`)
+	minusRegex     = regexp.MustCompile(`\bminus\b`)
+	subtractRegex  = regexp.MustCompile(`\bsubtract\b`)
+	timesRegex     = regexp.MustCompile(`\btimes\b`)
+	multiplyRegex  = regexp.MustCompile(`\bmultiply\b`)
+	dividedByRegex = regexp.MustCompile(`\bdivided by\b`)
+	divideRegex    = regexp.MustCompile(`\bdivide\b`)
+)
+
+// Pre-compiled utility regexes
+var (
+	whitespaceRegex = regexp.MustCompile(`\s+`)
+	numberPattern   = regexp.MustCompile(buildCompoundNumberPattern())
+)
 
 func parseNumberPhrase(phrase string) (int, bool) {
 	words := strings.Fields(strings.ToLower(phrase))
@@ -171,79 +242,40 @@ func Normalize(input string, variables map[string]float64) string {
 	result = replaceVariables(result, variables)
 
 	// Handle percentage operations - order matters (longer phrases first)
-	percentagePhrases := []struct {
-		phrase string
-		symbol string
-	}{
-		{"percentage", " * 0.01 * "},
-		{"percent", " * 0.01 * "},
-	}
-
-	for _, p := range percentagePhrases {
-		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(p.phrase) + `\b`)
-		result = re.ReplaceAllString(result, p.symbol)
-	}
-
-	// Handle % symbol separately (doesn't need word boundaries)
-	result = regexp.MustCompile(`%`).ReplaceAllString(result, " * 0.01 * ")
+	result = percentageRegex.ReplaceAllString(result, " * 0.01 * ")
+	result = percentRegex.ReplaceAllString(result, " * 0.01 * ")
+	result = percentSymbol.ReplaceAllString(result, " * 0.01 * ")
 
 	// Handle power operations - order matters to prevent double replacement
-	powerPhrases := []struct {
-		phrase string
-		symbol string
-	}{
-		{"raised to the power of", " ^ "}, // Must be first to prevent double ^
-		{"squared", " ^ 2"},               // Shortcut for ^2
-		{"cubed", " ^ 3"},                 // Shortcut for ^3
-		{"raised", " ^ "},                 // General "raised to"
-		{"power", " ^ "},                  // General "power"
-	}
-
-	for _, p := range powerPhrases {
-		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(p.phrase) + `\b`)
-		result = re.ReplaceAllString(result, p.symbol)
-	}
+	result = raisedToThePowerOfRegex.ReplaceAllString(result, " ^ ") // Must be first to prevent double ^
+	result = squaredRegex.ReplaceAllString(result, " ^ 2")            // Shortcut for ^2
+	result = cubedRegex.ReplaceAllString(result, " ^ 3")              // Shortcut for ^3
+	result = raisedRegex.ReplaceAllString(result, " ^ ")              // General "raised to"
+	result = powerRegex.ReplaceAllString(result, " ^ ")               // General "power"
 
 	// Handle function phrases - convert natural language to function names
 	// Order matters: longer phrases must be matched before shorter ones
-	functionPhrases := []struct {
-		phrase string
-		symbol string
-	}{
-		{"natural logarithm", "ln "}, // Must be before "logarithm of"
-		{"square root", "sqrt "},
-		{"squareroot", "sqrt "},
-		{"absolute", "abs "},
-		{"logarithm", "log "},
-		{"sine", "sin "},
-		{"cosine", "cos "},
-		{"tangent", "tan "},
-	}
+	result = naturalLogarithmRegex.ReplaceAllString(result, "ln ")  // Must be before "logarithm"
+	result = squareRootRegex.ReplaceAllString(result, "sqrt ")
+	result = squarerootRegex.ReplaceAllString(result, "sqrt ")
+	result = absoluteRegex.ReplaceAllString(result, "abs ")
+	result = logarithmRegex.ReplaceAllString(result, "log ")
+	result = sineRegex.ReplaceAllString(result, "sin ")
+	result = cosineRegex.ReplaceAllString(result, "cos ")
+	result = tangentRegex.ReplaceAllString(result, "tan ")
 
-	for _, f := range functionPhrases {
-		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(f.phrase) + `\b`)
-		result = re.ReplaceAllString(result, f.symbol)
-	}
-
-	operationMap := map[string]string{
-		"plus":       " + ",
-		"add":        " + ",
-		"added to":   " + ",
-		"minus":      " - ",
-		"subtract":   " - ",
-		"times":      " * ",
-		"multiply":   " * ",
-		"divided by": " / ",
-		"divide":     " / ",
-	}
-
-	for word, symbol := range operationMap {
-		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(word) + `\b`)
-		result = re.ReplaceAllString(result, symbol)
-	}
+	// Handle basic arithmetic operations
+	result = addedToRegex.ReplaceAllString(result, " + ")   // Must be before "add"
+	result = dividedByRegex.ReplaceAllString(result, " / ") // Must be before "divide"
+	result = plusRegex.ReplaceAllString(result, " + ")
+	result = addRegex.ReplaceAllString(result, " + ")
+	result = minusRegex.ReplaceAllString(result, " - ")
+	result = subtractRegex.ReplaceAllString(result, " - ")
+	result = timesRegex.ReplaceAllString(result, " * ")
+	result = multiplyRegex.ReplaceAllString(result, " * ")
+	result = divideRegex.ReplaceAllString(result, " / ")
 
 	// Single number pattern - handles both compound and individual numbers
-	numberPattern := regexp.MustCompile(`\b(?:(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|zero|and)\s*)+\b`)
 
 	result = numberPattern.ReplaceAllStringFunc(result, func(match string) string {
 		// Try compound number parsing first (handles complex cases and validation)
@@ -262,7 +294,7 @@ func Normalize(input string, variables map[string]float64) string {
 		})
 	})
 
-	result = regexp.MustCompile(`\s+`).ReplaceAllString(result, " ")
+	result = whitespaceRegex.ReplaceAllString(result, " ")
 	result = strings.TrimSpace(result)
 
 	return result

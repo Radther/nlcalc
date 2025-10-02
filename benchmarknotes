@@ -1,4 +1,5 @@
 # Pre-optimisation benchmarks
+Note, don't look at overall time. Look at the ns/op, B/op, and allocs/op. Lower is better.
 
 ❯ go test -bench=. -benchmem ./internal/normalizer
 goos: linux
@@ -50,3 +51,54 @@ BenchmarkNormalize_Batch-12                          692           1728637 ns/op
 BenchmarkNormalize_LargeScale-12                      82          16310552 ns/op         9777942 B/op      80837 allocs/op
 PASS
 ok      github.com/radther/nlcalc/internal/normalizer   12.524s
+
+# Post-optimisation benchmarks
+
+goos: linux
+goarch: amd64
+pkg: github.com/radther/nlcalc/internal/normalizer
+cpu: AMD Ryzen 5 3600 6-Core Processor
+BenchmarkNormalize_Simple-12                       71738             19541 ns/op            1334 B/op         85 allocs/op
+BenchmarkNormalize_Complex-12                      17883             61395 ns/op            5115 B/op         95 allocs/op
+BenchmarkNormalize_CompoundNumbers-12              20833             60221 ns/op            4804 B/op         88 allocs/op
+BenchmarkNormalize_WithVariables-12                15366             85579 ns/op           12310 B/op        191 allocs/op
+BenchmarkNormalize_Functions-12                    28278             44869 ns/op            3150 B/op         88 allocs/op
+BenchmarkNormalize_PowerOperations-12              37767             35285 ns/op            2486 B/op         91 allocs/op
+BenchmarkNormalize_Percentage-12                   20530             69123 ns/op            4787 B/op         95 allocs/op
+BenchmarkNormalize_Batch-12                         3906            461968 ns/op           67925 B/op       1378 allocs/op
+BenchmarkNormalize_LargeScale-12                     369           3208801 ns/op          220561 B/op       8620 allocs/op
+PASS
+ok      github.com/radther/nlcalc/internal/normalizer   17.119s
+
+goos: linux
+goarch: amd64
+pkg: github.com/radther/nlcalc/internal/normalizer
+cpu: AMD Ryzen 5 3600 6-Core Processor
+BenchmarkNormalize_Simple-12                       61800             18061 ns/op            1338 B/op         85 allocs/op
+BenchmarkNormalize_Complex-12                      18832             67972 ns/op            5124 B/op         95 allocs/op
+BenchmarkNormalize_CompoundNumbers-12              18544             63844 ns/op            4814 B/op         88 allocs/op
+BenchmarkNormalize_WithVariables-12                13831             84760 ns/op           12305 B/op        191 allocs/op
+BenchmarkNormalize_Functions-12                    25672             45987 ns/op            3146 B/op         88 allocs/op
+BenchmarkNormalize_PowerOperations-12              34366             34524 ns/op            2489 B/op         91 allocs/op
+BenchmarkNormalize_Percentage-12                   17222             65724 ns/op            4775 B/op         95 allocs/op
+BenchmarkNormalize_Batch-12                         2317            468353 ns/op           67836 B/op       1378 allocs/op
+BenchmarkNormalize_LargeScale-12                     349           3257523 ns/op          220325 B/op       8620 allocs/op
+PASS
+ok      github.com/radther/nlcalc/internal/normalizer   14.786s
+
+❯ go test -bench=. -benchmem ./internal/normalizer
+goos: linux
+goarch: amd64
+pkg: github.com/radther/nlcalc/internal/normalizer
+cpu: AMD Ryzen 5 3600 6-Core Processor
+BenchmarkNormalize_Simple-12                       80442             18318 ns/op            1337 B/op         85 allocs/op
+BenchmarkNormalize_Complex-12                      18018             67851 ns/op            5115 B/op         95 allocs/op
+BenchmarkNormalize_CompoundNumbers-12              18474             67675 ns/op            4806 B/op         88 allocs/op
+BenchmarkNormalize_WithVariables-12                14542             83912 ns/op           12293 B/op        191 allocs/op
+BenchmarkNormalize_Functions-12                    28275             42326 ns/op            3149 B/op         88 allocs/op
+BenchmarkNormalize_PowerOperations-12              30031             33790 ns/op            2493 B/op         91 allocs/op
+BenchmarkNormalize_Percentage-12                   16812             62125 ns/op            4783 B/op         95 allocs/op
+BenchmarkNormalize_Batch-12                         3442            474132 ns/op           67868 B/op       1378 allocs/op
+BenchmarkNormalize_LargeScale-12                     325           3169802 ns/op          220864 B/op       8620 allocs/op
+PASS
+ok      github.com/radther/nlcalc/internal/normalizer   15.379s
