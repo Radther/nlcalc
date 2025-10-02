@@ -414,3 +414,160 @@ func TestEvaluate(t *testing.T) {
 		})
 	}
 }
+
+func TestEvaluateFunctions(t *testing.T) {
+	tests := []struct {
+		name     string
+		tokens   []tokenizer.Token
+		expected float64
+		hasError bool
+	}{
+		{
+			name: "sqrt_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "sqrt"},
+				{Type: tokenizer.NUMBER, Value: "16"},
+			},
+			expected: 4.0,
+			hasError: false,
+		},
+		{
+			name: "sqrt_consecutive",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "sqrt"},
+				{Type: tokenizer.FUNCTION, Value: "sqrt"},
+				{Type: tokenizer.NUMBER, Value: "16"},
+			},
+			expected: 2.0, // sqrt(sqrt(16)) = sqrt(4) = 2
+			hasError: false,
+		},
+		{
+			name: "abs_positive",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "abs"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: 5.0,
+			hasError: false,
+		},
+		{
+			name: "abs_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "abs"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: 5.0,
+			hasError: false,
+		},
+		{
+			name: "log_base10",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log"},
+				{Type: tokenizer.NUMBER, Value: "100"},
+			},
+			expected: 2.0, // log10(100) = 2
+			hasError: false,
+		},
+		{
+			name: "ln_natural",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "ln"},
+				{Type: tokenizer.NUMBER, Value: "2.718281828459045"},
+			},
+			expected: 1.0, // ln(e) ≈ 1
+			hasError: false,
+		},
+		{
+			name: "function_in_expression",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "2"},
+				{Type: tokenizer.OPERATOR, Value: "*"},
+				{Type: tokenizer.FUNCTION, Value: "sqrt"},
+				{Type: tokenizer.NUMBER, Value: "16"},
+			},
+			expected: 8.0, // 2 * sqrt(16) = 2 * 4 = 8
+			hasError: false,
+		},
+		{
+			name: "function_with_power",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "sqrt"},
+				{Type: tokenizer.NUMBER, Value: "16"},
+				{Type: tokenizer.OPERATOR, Value: "^"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 16.0, // (sqrt(16))^2 = 4^2 = 16
+			hasError: false,
+		},
+		{
+			name: "multiple_different_functions",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log"},
+				{Type: tokenizer.FUNCTION, Value: "sqrt"},
+				{Type: tokenizer.NUMBER, Value: "10000"},
+			},
+			expected: 2.0, // log(sqrt(10000)) = log(100) = 2
+			hasError: false,
+		},
+		{
+			name: "negative_unary_with_function",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.FUNCTION, Value: "sqrt"},
+				{Type: tokenizer.NUMBER, Value: "16"},
+			},
+			expected: -4.0, // -(sqrt(16)) = -4
+			hasError: false,
+		},
+		{
+			name: "sqrt_negative_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "sqrt"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "16"},
+			},
+			expected: 0.0,
+			hasError: true, // sqrt(-16) is error
+		},
+		{
+			name: "log_negative_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: 0.0,
+			hasError: true, // log(-5) is error
+		},
+		{
+			name: "log_zero_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 0.0,
+			hasError: true, // log(0) is error
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Evaluate(tt.tokens)
+
+			if tt.hasError && err == nil {
+				t.Errorf("Expected error but got none")
+				return
+			}
+
+			if !tt.hasError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if !tt.hasError && math.Abs(result-tt.expected) > 1e-9 {
+				t.Errorf("Expected %f, got %f", tt.expected, result)
+			}
+		})
+	}
+}

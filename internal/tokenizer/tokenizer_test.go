@@ -328,6 +328,88 @@ func TestTokenize(t *testing.T) {
 			},
 			hasError: false,
 		},
+		{
+			name:  "function_with_number",
+			input: "sqrt 16",
+			expected: []Token{
+				{Type: FUNCTION, Value: "sqrt"},
+				{Type: NUMBER, Value: "16"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "function_with_parentheses",
+			input: "sqrt(16)",
+			expected: []Token{
+				{Type: FUNCTION, Value: "sqrt"},
+				{Type: PARENTHESIS, Value: "("},
+				{Type: NUMBER, Value: "16"},
+				{Type: PARENTHESIS, Value: ")"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "consecutive_functions",
+			input: "sqrt sqrt 16",
+			expected: []Token{
+				{Type: FUNCTION, Value: "sqrt"},
+				{Type: FUNCTION, Value: "sqrt"},
+				{Type: NUMBER, Value: "16"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "function_in_expression",
+			input: "2 * sqrt 16",
+			expected: []Token{
+				{Type: NUMBER, Value: "2"},
+				{Type: OPERATOR, Value: "*"},
+				{Type: FUNCTION, Value: "sqrt"},
+				{Type: NUMBER, Value: "16"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "multiple_functions",
+			input: "log sqrt 16",
+			expected: []Token{
+				{Type: FUNCTION, Value: "log"},
+				{Type: FUNCTION, Value: "sqrt"},
+				{Type: NUMBER, Value: "16"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "abs_function",
+			input: "abs -5",
+			expected: []Token{
+				{Type: FUNCTION, Value: "abs"},
+				{Type: UNARY_OPERATOR, Value: "-"},
+				{Type: NUMBER, Value: "5"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "trig_functions",
+			input: "sin 90",
+			expected: []Token{
+				{Type: FUNCTION, Value: "sin"},
+				{Type: NUMBER, Value: "90"},
+			},
+			hasError: false,
+		},
+		{
+			name:     "function_without_argument_error",
+			input:    "sqrt",
+			expected: nil,
+			hasError: true,
+		},
+		{
+			name:     "function_followed_by_operator_error",
+			input:    "sqrt * 5",
+			expected: nil,
+			hasError: true,
+		},
 	}
 
 	for _, tt := range tests {

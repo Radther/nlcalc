@@ -137,8 +137,65 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 		return 0.0, errors.New("invalid single token")
 	}
 
-	// Process unary operators first
-	expression := processUnaryOperators(tokens)
+	expression := tokens
+
+	// Process functions and unary operators in a loop until both are fully resolved
+	// This handles cases like:
+	// - "abs -5" → process unary first → "abs (-5)" → "5"
+	// - "-sqrt 16" → process function first → "-(4)" → "-4"
+	for {
+		madeProgress := false
+
+		// 1. Try to process unary operators (converts UNARY_OP + NUMBER to NUMBER)
+		newExpression := processUnaryOperators(expression)
+		if len(newExpression) != len(expression) {
+			expression = newExpression
+			madeProgress = true
+			continue
+		}
+
+		// 2. Try to process functions right-to-left
+		funcIndex := findRightmostFunction(expression)
+		if funcIndex != -1 {
+			if funcIndex >= len(expression)-1 {
+				return 0.0, errors.New("function requires argument")
+			}
+
+			// Next token must be NUMBER (unary operators have been processed)
+			if expression[funcIndex+1].Type != tokenizer.NUMBER {
+				// Can't process this function yet, might need more unary op processing
+				// This shouldn't happen if unary ops are processed correctly
+				return 0.0, errors.New("function argument must be a number")
+			}
+
+			arg, err := strconv.ParseFloat(expression[funcIndex+1].Value, 64)
+			if err != nil {
+				return 0.0, errors.New("invalid function argument")
+			}
+
+			result, err := applyFunction(expression[funcIndex].Value, arg)
+			if err != nil {
+				return 0.0, err
+			}
+
+			// Replace [FUNCTION, NUMBER] with result NUMBER
+			resultToken := tokenizer.Token{
+				Type:  tokenizer.NUMBER,
+				Value: strconv.FormatFloat(result, 'f', -1, 64),
+			}
+
+			newExpression := make([]tokenizer.Token, 0, len(expression)-1)
+			newExpression = append(newExpression, expression[:funcIndex]...)
+			newExpression = append(newExpression, resultToken)
+			newExpression = append(newExpression, expression[funcIndex+2:]...)
+			expression = newExpression
+			madeProgress = true
+		}
+
+		if !madeProgress {
+			break
+		}
+	}
 
 	for {
 		opIndex := findHighestPrecedenceOperator(expression)
@@ -240,4 +297,48 @@ func findHighestPrecedenceOperator(tokens []tokenizer.Token) int {
 	}
 
 	return -1
+}
+
+// findRightmostFunction scans right-to-left to find the rightmost FUNCTION token.
+// This enables right-associative function evaluation, so "sqrt sqrt 16" evaluates
+// as "sqrt (sqrt 16)" naturally.
+func findRightmostFunction(tokens []tokenizer.Token) int {
+	for i := len(tokens) - 1; i >= 0; i-- {
+		if tokens[i].Type == tokenizer.FUNCTION {
+			return i
+		}
+	}
+	return -1
+}
+
+// applyFunction applies the named function to a value.
+// Returns an error for invalid function names or domain errors (e.g., sqrt of negative).
+func applyFunction(name string, value float64) (float64, error) {
+	switch name {
+	case "sqrt":
+		if value < 0 {
+			return 0, errors.New("square root of negative number")
+		}
+		return math.Sqrt(value), nil
+	case "abs":
+		return math.Abs(value), nil
+	case "log":
+		if value <= 0 {
+			return 0, errors.New("logarithm of non-positive number")
+		}
+		return math.Log10(value), nil
+	case "ln":
+		if value <= 0 {
+			return 0, errors.New("natural logarithm of non-positive number")
+		}
+		return math.Log(value), nil
+	case "sin":
+		return math.Sin(value), nil
+	case "cos":
+		return math.Cos(value), nil
+	case "tan":
+		return math.Tan(value), nil
+	default:
+		return 0, errors.New("unknown function: " + name)
+	}
 }

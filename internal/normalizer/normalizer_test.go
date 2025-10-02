@@ -114,6 +114,108 @@ func TestNormalize(t *testing.T) {
 			input:    "2 ^ 3",
 			expected: "2 ^ 3",
 		},
+		// Function operations
+		{
+			name:     "square_root",
+			input:    "square root 16",
+			expected: "sqrt 16",
+		},
+		{
+			name:     "absolute_value",
+			input:    "absolute -5",
+			expected: "abs -5",
+		},
+		{
+			name:     "logarithm",
+			input:    "logarithm 100",
+			expected: "log 100",
+		},
+		{
+			name:     "natural_logarithm",
+			input:    "natural logarithm 10",
+			expected: "ln 10",
+		},
+		{
+			name:     "sine",
+			input:    "sine 90",
+			expected: "sin 90",
+		},
+		{
+			name:     "cosine",
+			input:    "cosine 0",
+			expected: "cos 0",
+		},
+		{
+			name:     "tangent",
+			input:    "tangent 45",
+			expected: "tan 45",
+		},
+		{
+			name:     "nested_functions",
+			input:    "square root squareroot 16",
+			expected: "sqrt sqrt 16",
+		},
+		{
+			name:     "function_with_written_number",
+			input:    "square root sixteen",
+			expected: "sqrt 16",
+		},
+		{
+			name:     "function_in_expression",
+			input:    "two times square root 16",
+			expected: "2 * sqrt 16",
+		},
+		// Function operations with extra
+		{
+			name:     "square_root",
+			input:    "square root of 16",
+			expected: "sqrt of 16",
+		},
+		{
+			name:     "absolute_value",
+			input:    "absolute value of -5",
+			expected: "abs value of -5",
+		},
+		{
+			name:     "logarithm",
+			input:    "logarithm of 100",
+			expected: "log of 100",
+		},
+		{
+			name:     "natural_logarithm",
+			input:    "natural logarithm of 10",
+			expected: "ln of 10",
+		},
+		{
+			name:     "sine",
+			input:    "sine of 90",
+			expected: "sin of 90",
+		},
+		{
+			name:     "cosine",
+			input:    "cosine of 0",
+			expected: "cos of 0",
+		},
+		{
+			name:     "tangent",
+			input:    "tangent of 45",
+			expected: "tan of 45",
+		},
+		{
+			name:     "nested_functions",
+			input:    "square root of square root of 16",
+			expected: "sqrt of sqrt of 16",
+		},
+		{
+			name:     "function_with_written_number",
+			input:    "square root of sixteen",
+			expected: "sqrt of 16",
+		},
+		{
+			name:     "function_in_expression",
+			input:    "two times square root of 16",
+			expected: "2 * sqrt of 16",
+		},
 	}
 
 	for _, tt := range tests {

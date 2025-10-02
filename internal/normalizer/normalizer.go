@@ -183,15 +183,36 @@ func Normalize(input string, variables map[string]float64) string {
 		symbol string
 	}{
 		{"raised to the power of", " ^ "}, // Must be first to prevent double ^
-		{"squared", " ^ 2"},                // Shortcut for ^2
-		{"cubed", " ^ 3"},                  // Shortcut for ^3
-		{"raised", " ^ "},                  // General "raised to"
-		{"power", " ^ "},                   // General "power"
+		{"squared", " ^ 2"},               // Shortcut for ^2
+		{"cubed", " ^ 3"},                 // Shortcut for ^3
+		{"raised", " ^ "},                 // General "raised to"
+		{"power", " ^ "},                  // General "power"
 	}
 
 	for _, p := range powerPhrases {
 		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(p.phrase) + `\b`)
 		result = re.ReplaceAllString(result, p.symbol)
+	}
+
+	// Handle function phrases - convert natural language to function names
+	// Order matters: longer phrases must be matched before shorter ones
+	functionPhrases := []struct {
+		phrase string
+		symbol string
+	}{
+		{"natural logarithm", "ln "}, // Must be before "logarithm of"
+		{"square root", "sqrt "},
+		{"squareroot", "sqrt "},
+		{"absolute", "abs "},
+		{"logarithm", "log "},
+		{"sine", "sin "},
+		{"cosine", "cos "},
+		{"tangent", "tan "},
+	}
+
+	for _, f := range functionPhrases {
+		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(f.phrase) + `\b`)
+		result = re.ReplaceAllString(result, f.symbol)
 	}
 
 	operationMap := map[string]string{

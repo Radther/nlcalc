@@ -1,6 +1,9 @@
 package nlcalc
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestParse(t *testing.T) {
 	tests := []struct {
@@ -371,6 +374,139 @@ func TestParsePowerOperations(t *testing.T) {
 				t.Errorf("Unexpected error: %v", err)
 			}
 			if result != tt.expected {
+				t.Errorf("Expected %f, got %f", tt.expected, result)
+			}
+		})
+	}
+}
+func TestParseFunctions(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected float64
+	}{
+		// Square root
+		{
+			name:     "sqrt_symbol",
+			input:    "sqrt(16)",
+			expected: 4.0,
+		},
+		{
+			name:     "sqrt_implicit",
+			input:    "sqrt 16",
+			expected: 4.0,
+		},
+		{
+			name:     "sqrt_natural_language",
+			input:    "square root of 16",
+			expected: 4.0,
+		},
+		{
+			name:     "sqrt_consecutive",
+			input:    "sqrt sqrt 16",
+			expected: 2.0, // sqrt(sqrt(16)) = sqrt(4) = 2
+		},
+		{
+			name:     "sqrt_consecutive_natural",
+			input:    "square root of square root of 16",
+			expected: 2.0,
+		},
+		{
+			name:     "sqrt_in_expression",
+			input:    "2 * sqrt 16",
+			expected: 8.0,
+		},
+		{
+			name:     "sqrt_with_power",
+			input:    "sqrt 16 ^ 2",
+			expected: 16.0, // (sqrt(16))^2 = 4^2 = 16
+		},
+
+		// Absolute value
+		{
+			name:     "abs_positive",
+			input:    "abs 5",
+			expected: 5.0,
+		},
+		{
+			name:     "abs_negative",
+			input:    "absolute value of minus ten",
+			expected: 10.0,
+		},
+
+		// Logarithms
+		{
+			name:     "log_base10",
+			input:    "log 100",
+			expected: 2.0,
+		},
+		{
+			name:     "log_natural_language",
+			input:    "logarithm of 1000",
+			expected: 3.0,
+		},
+		{
+			name:     "ln_natural",
+			input:    "natural logarithm of 2.718281828459045",
+			expected: 1.0,
+		},
+
+		// Trigonometric functions
+		{
+			name:     "sin_zero",
+			input:    "sine of 0",
+			expected: 0.0,
+		},
+		{
+			name:     "cos_zero",
+			input:    "cosine of 0",
+			expected: 1.0,
+		},
+
+		// Mixed functions
+		{
+			name:     "log_of_sqrt",
+			input:    "log sqrt 10000",
+			expected: 2.0, // log(sqrt(10000)) = log(100) = 2
+		},
+		{
+			name:     "log_of_sqrt_natural",
+			input:    "logarithm of square root of 10000",
+			expected: 2.0,
+		},
+
+		// Functions with unary operators
+		{
+			name:     "negative_sqrt",
+			input:    "-sqrt 16",
+			expected: -4.0,
+		},
+		{
+			name:     "unary_plus_sqrt",
+			input:    "+sqrt 16",
+			expected: 4.0,
+		},
+
+		// Complex expressions
+		{
+			name:     "function_complex_expression",
+			input:    "sqrt((8 * 3) - 8)",
+			expected: 4.0, // sqrt((24) - 8) = sqrt(16) = 4
+		},
+		{
+			name:     "mixed_operations",
+			input:    "10 + sqrt 16 * 2",
+			expected: 18.0, // 10 + (sqrt(16) * 2) = 10 + (4 * 2) = 10 + 8 = 18
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Parse(tt.input, nil)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if math.Abs(result-tt.expected) > 1e-9 {
 				t.Errorf("Expected %f, got %f", tt.expected, result)
 			}
 		})
