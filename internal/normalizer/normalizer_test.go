@@ -21,17 +21,17 @@ func TestNormalize(t *testing.T) {
 		{
 			name:     "percentage",
 			input:    "20% of 100",
-			expected: "20 * 0.01 * 100",
+			expected: "20 * 0.01 * of 100",
 		},
 		{
 			name:     "complex_expression",
 			input:    "Twenty percent of one hundred",
-			expected: "20 * 0.01 * 100",
+			expected: "20 * 0.01 * of 100",
 		},
 		{
 			name:     "complex_expression_percentage",
 			input:    "Twenty % of one hundred",
-			expected: "20 * 0.01 * 100",
+			expected: "20 * 0.01 * of 100",
 		},
 		{
 			name:     "word_operations",

@@ -170,11 +170,21 @@ func Normalize(input string, variables map[string]float64) string {
 	// Replace variables first, before other transformations
 	result = replaceVariables(result, variables)
 
-	result = regexp.MustCompile(`\bpercent of\b`).ReplaceAllString(result, " * 0.01 * ")
-	result = regexp.MustCompile(`\bpercentage of\b`).ReplaceAllString(result, " * 0.01 * ")
-	result = regexp.MustCompile(`% of\b`).ReplaceAllString(result, " * 0.01 * ")
-	result = regexp.MustCompile(`\bpercent\b`).ReplaceAllString(result, " * 0.01 * ")
-	result = regexp.MustCompile(`\bpercentage\b`).ReplaceAllString(result, " * 0.01 * ")
+	// Handle percentage operations - order matters (longer phrases first)
+	percentagePhrases := []struct {
+		phrase string
+		symbol string
+	}{
+		{"percentage", " * 0.01 * "},
+		{"percent", " * 0.01 * "},
+	}
+
+	for _, p := range percentagePhrases {
+		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(p.phrase) + `\b`)
+		result = re.ReplaceAllString(result, p.symbol)
+	}
+
+	// Handle % symbol separately (doesn't need word boundaries)
 	result = regexp.MustCompile(`%`).ReplaceAllString(result, " * 0.01 * ")
 
 	// Handle power operations - order matters to prevent double replacement
