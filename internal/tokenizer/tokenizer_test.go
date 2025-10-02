@@ -294,6 +294,40 @@ func TestTokenize(t *testing.T) {
 			},
 			hasError: false,
 		},
+		{
+			name:  "power_operator",
+			input: "2 ^ 3",
+			expected: []Token{
+				{Type: NUMBER, Value: "2"},
+				{Type: OPERATOR, Value: "^"},
+				{Type: NUMBER, Value: "3"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "power_with_precedence",
+			input: "2 + 3 ^ 2",
+			expected: []Token{
+				{Type: NUMBER, Value: "2"},
+				{Type: OPERATOR, Value: "+"},
+				{Type: NUMBER, Value: "3"},
+				{Type: OPERATOR, Value: "^"},
+				{Type: NUMBER, Value: "2"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "chained_power",
+			input: "2 ^ 3 ^ 2",
+			expected: []Token{
+				{Type: NUMBER, Value: "2"},
+				{Type: OPERATOR, Value: "^"},
+				{Type: NUMBER, Value: "3"},
+				{Type: OPERATOR, Value: "^"},
+				{Type: NUMBER, Value: "2"},
+			},
+			hasError: false,
+		},
 	}
 
 	for _, tt := range tests {

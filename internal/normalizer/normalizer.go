@@ -160,8 +160,8 @@ func replaceVariables(input string, variables map[string]float64) string {
 }
 
 // Normalize converts a raw input string into a normalized mathematical expression.
-// It transforms written numbers ("ten" → "10"), operation words ("plus" → "+"),
-// and percentage notations ("20% of" → "* 0.01 *") into symbolic form.
+// It transforms written numbers ("ten" → "10"), operation words ("plus" → "+", "power" → "^"),
+// percentage notations ("20% of" → "* 0.01 *"), and power shortcuts ("squared" → "^ 2") into symbolic form.
 // Variables from the optional map are replaced with their numeric values before other transformations.
 // Returns a normalized string ready for cleaning and tokenization.
 func Normalize(input string, variables map[string]float64) string {
@@ -176,6 +176,23 @@ func Normalize(input string, variables map[string]float64) string {
 	result = regexp.MustCompile(`\bpercent\b`).ReplaceAllString(result, " * 0.01 * ")
 	result = regexp.MustCompile(`\bpercentage\b`).ReplaceAllString(result, " * 0.01 * ")
 	result = regexp.MustCompile(`%`).ReplaceAllString(result, " * 0.01 * ")
+
+	// Handle power operations - order matters to prevent double replacement
+	powerPhrases := []struct {
+		phrase string
+		symbol string
+	}{
+		{"raised to the power of", " ^ "}, // Must be first to prevent double ^
+		{"squared", " ^ 2"},                // Shortcut for ^2
+		{"cubed", " ^ 3"},                  // Shortcut for ^3
+		{"raised", " ^ "},                  // General "raised to"
+		{"power", " ^ "},                   // General "power"
+	}
+
+	for _, p := range powerPhrases {
+		re := regexp.MustCompile(`\b` + regexp.QuoteMeta(p.phrase) + `\b`)
+		result = re.ReplaceAllString(result, p.symbol)
+	}
 
 	operationMap := map[string]string{
 		"plus":       " + ",

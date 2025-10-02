@@ -1,10 +1,11 @@
 // Package evaluator calculates the final result from a sequence of mathematical tokens.
 // It implements standard order of operations (PEMDAS/BODMAS), handling parentheses,
-// multiplication, division, addition, and subtraction with proper precedence.
+// exponentiation, multiplication, division, addition, and subtraction with proper precedence.
 package evaluator
 
 import (
 	"errors"
+	"math"
 	"strconv"
 
 	"github.com/radther/nlcalc/internal/tokenizer"
@@ -13,6 +14,7 @@ import (
 // Evaluate calculates the result of a mathematical expression represented as tokens.
 // It follows standard order of operations (PEMDAS/BODMAS):
 //   - Parentheses (evaluated from innermost to outermost)
+//   - Exponentiation (right to left, right-associative)
 //   - Multiplication and Division (left to right)
 //   - Addition and Subtraction (left to right)
 //
@@ -160,6 +162,8 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 
 		var result float64
 		switch expression[opIndex].Value {
+		case "^":
+			result = math.Pow(left, right)
 		case "*":
 			result = left * right
 		case "/":
@@ -213,12 +217,22 @@ func findClosingParenthesis(tokens []tokenizer.Token, start int) int {
 }
 
 func findHighestPrecedenceOperator(tokens []tokenizer.Token) int {
+	// Exponentiation - RIGHT-associative (scan right-to-left)
+	// This ensures 2^3^2 evaluates as 2^(3^2) = 512, not (2^3)^2 = 64
+	for i := len(tokens) - 1; i >= 0; i-- {
+		if tokens[i].Type == tokenizer.OPERATOR && tokens[i].Value == "^" {
+			return i
+		}
+	}
+
+	// Multiplication/Division - left-associative (scan left-to-right)
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].Type == tokenizer.OPERATOR && (tokens[i].Value == "*" || tokens[i].Value == "/") {
 			return i
 		}
 	}
 
+	// Addition/Subtraction - left-associative (scan left-to-right)
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].Type == tokenizer.OPERATOR && (tokens[i].Value == "+" || tokens[i].Value == "-") {
 			return i

@@ -323,6 +323,75 @@ func TestEvaluate(t *testing.T) {
 			expected: 5.0,
 			hasError: false,
 		},
+		{
+			name: "power_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "2"},
+				{Type: tokenizer.OPERATOR, Value: "^"},
+				{Type: tokenizer.NUMBER, Value: "3"},
+			},
+			expected: 8.0,
+			hasError: false,
+		},
+		{
+			name: "power_right_associative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "2"},
+				{Type: tokenizer.OPERATOR, Value: "^"},
+				{Type: tokenizer.NUMBER, Value: "3"},
+				{Type: tokenizer.OPERATOR, Value: "^"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 512.0, // 2^(3^2) = 2^9 = 512, NOT (2^3)^2 = 64
+			hasError: false,
+		},
+		{
+			name: "power_with_multiplication_precedence",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "2"},
+				{Type: tokenizer.OPERATOR, Value: "*"},
+				{Type: tokenizer.NUMBER, Value: "3"},
+				{Type: tokenizer.OPERATOR, Value: "^"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 18.0, // 2 * (3^2) = 2 * 9 = 18
+			hasError: false,
+		},
+		{
+			name: "power_with_parentheses",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.PARENTHESIS, Value: "("},
+				{Type: tokenizer.NUMBER, Value: "2"},
+				{Type: tokenizer.OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "3"},
+				{Type: tokenizer.PARENTHESIS, Value: ")"},
+				{Type: tokenizer.OPERATOR, Value: "^"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 25.0, // (2+3)^2 = 5^2 = 25
+			hasError: false,
+		},
+		{
+			name: "negative_base_power",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+				{Type: tokenizer.OPERATOR, Value: "^"},
+				{Type: tokenizer.NUMBER, Value: "3"},
+			},
+			expected: -8.0, // (-2)^3 = -8
+			hasError: false,
+		},
+		{
+			name: "decimal_exponent",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "4"},
+				{Type: tokenizer.OPERATOR, Value: "^"},
+				{Type: tokenizer.NUMBER, Value: "0.5"},
+			},
+			expected: 2.0, // 4^0.5 = sqrt(4) = 2
+			hasError: false,
+		},
 	}
 
 	for _, tt := range tests {

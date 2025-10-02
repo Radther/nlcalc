@@ -58,6 +58,62 @@ func TestNormalize(t *testing.T) {
 			input:    "two thousand five hundred",
 			expected: "2500",
 		},
+		// Power operations
+		{
+			name:     "power_keyword",
+			input:    "2 power 3",
+			expected: "2 ^ 3",
+		},
+		{
+			name:     "raised_to",
+			input:    "2 raised to 3",
+			expected: "2 ^ to 3", // "to" left for cleaner to remove
+		},
+		{
+			name:     "raised_to_the_power_of",
+			input:    "2 raised to the power of 3",
+			expected: "2 ^ 3", // Full phrase replaced, no filler words left
+		},
+		{
+			name:     "to_the_power_of",
+			input:    "2 to the power of 3",
+			expected: "2 to the ^ of 3", // "power" replaced, filler words left for cleaner
+		},
+		{
+			name:     "squared",
+			input:    "5 squared",
+			expected: "5 ^ 2",
+		},
+		{
+			name:     "cubed",
+			input:    "3 cubed",
+			expected: "3 ^ 3",
+		},
+		{
+			name:     "written_number_squared",
+			input:    "ten squared",
+			expected: "10 ^ 2",
+		},
+		{
+			name:     "written_number_cubed",
+			input:    "five cubed",
+			expected: "5 ^ 3",
+		},
+		{
+			name:     "power_with_written_numbers",
+			input:    "two power three",
+			expected: "2 ^ 3",
+		},
+		{
+			name:     "raised_with_written_numbers",
+			input:    "two raised to three",
+			expected: "2 ^ to 3", // "to" left for cleaner to remove
+		},
+		{
+			name:     "power_symbol",
+			input:    "2 ^ 3",
+			expected: "2 ^ 3",
+		},
 	}
 
 	for _, tt := range tests {

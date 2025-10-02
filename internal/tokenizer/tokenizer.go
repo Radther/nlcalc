@@ -14,9 +14,9 @@ type TokenType string
 const (
 	// NUMBER represents numeric values (integers and decimals).
 	NUMBER TokenType = "NUMBER"
-	// OPERATOR represents mathematical operators (+, -, *, /).
+	// OPERATOR represents mathematical operators (+, -, *, /, ^).
 	OPERATOR TokenType = "OPERATOR"
-	// UNARY_OPERATOR represents unary operators (unary minus).
+	// UNARY_OPERATOR represents unary operators (unary minus, unary plus).
 	UNARY_OPERATOR TokenType = "UNARY_OPERATOR"
 	// PARENTHESIS represents grouping symbols (parentheses).
 	PARENTHESIS TokenType = "PARENTHESIS"
@@ -34,7 +34,7 @@ func (t Token) String() string {
 
 var (
 	numberPattern     = regexp.MustCompile(`\d+\.?\d*`)
-	operatorPattern   = regexp.MustCompile(`[+\-*/]`)
+	operatorPattern   = regexp.MustCompile(`[+\-*/^]`)
 	parenthesisPattern = regexp.MustCompile(`[()]`)
 	whitespacePattern = regexp.MustCompile(`\s+`)
 )
