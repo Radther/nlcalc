@@ -256,6 +256,73 @@ func TestEvaluate(t *testing.T) {
 			expected: 5.0,
 			hasError: false,
 		},
+		{
+			name: "unary_plus_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: 5.0,
+			hasError: false,
+		},
+		{
+			name: "unary_plus_preserves_negative_from_parentheses",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "+"},
+				{Type: tokenizer.PARENTHESIS, Value: "("},
+				{Type: tokenizer.NUMBER, Value: "100"},
+				{Type: tokenizer.OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "200"},
+				{Type: tokenizer.PARENTHESIS, Value: ")"},
+			},
+			expected: -100.0,
+			hasError: false,
+		},
+		{
+			name: "unary_plus_after_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: -5.0,
+			hasError: false,
+		},
+		{
+			name: "mixed_unary_plus_and_minus_operators",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "10"},
+				{Type: tokenizer.OPERATOR, Value: "+"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: -5.0,
+			hasError: false,
+		},
+		{
+			name: "unary_plus_with_multiplication",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "10"},
+				{Type: tokenizer.OPERATOR, Value: "*"},
+				{Type: tokenizer.NUMBER, Value: "3"},
+			},
+			expected: 30.0,
+			hasError: false,
+		},
+		{
+			name: "double_unary_plus",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "+"},
+				{Type: tokenizer.PARENTHESIS, Value: "("},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+				{Type: tokenizer.PARENTHESIS, Value: ")"},
+			},
+			expected: 5.0,
+			hasError: false,
+		},
 	}
 
 	for _, tt := range tests {

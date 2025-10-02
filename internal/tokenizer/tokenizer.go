@@ -40,7 +40,7 @@ var (
 )
 
 // isUnaryContext determines if the current position represents a unary operator context.
-// A minus is unary (negation) rather than binary (subtraction) when it appears:
+// An operator (+/-) is unary rather than binary when it appears:
 // - At the start of the expression (no previous tokens)
 // - After another operator
 // - After an opening parenthesis
@@ -85,8 +85,8 @@ func Tokenize(input string) ([]Token, error) {
 		}
 
 		if operatorMatch := operatorPattern.FindString(input[i:]); operatorMatch != "" && strings.HasPrefix(input[i:], operatorMatch) {
-			// Check if minus is unary (negation) or binary (subtraction)
-			if operatorMatch == "-" && isUnaryContext(tokens) {
+			// Check if +/- is unary or binary based on context
+			if (operatorMatch == "-" || operatorMatch == "+") && isUnaryContext(tokens) {
 				tokens = append(tokens, Token{Type: UNARY_OPERATOR, Value: operatorMatch})
 			} else {
 				tokens = append(tokens, Token{Type: OPERATOR, Value: operatorMatch})
@@ -140,14 +140,16 @@ func validateTokenSequence(tokens []Token) error {
 					return fmt.Errorf("unary operator in invalid position after %s", prev.Value)
 				}
 			}
-			// Unary operators must be followed by a number or opening parenthesis
+			// Unary operators must be followed by a number, opening parenthesis, or another unary operator
 			if i == len(tokens)-1 {
 				return fmt.Errorf("expression cannot end with unary operator: %s", token.Value)
 			}
 			if i < len(tokens)-1 {
 				next := tokens[i+1]
-				if next.Type != NUMBER && !(next.Type == PARENTHESIS && next.Value == "(") {
-					return fmt.Errorf("unary operator must be followed by number or '(', got %s", next.Value)
+				if next.Type != NUMBER &&
+				   next.Type != UNARY_OPERATOR &&
+				   !(next.Type == PARENTHESIS && next.Value == "(") {
+					return fmt.Errorf("unary operator must be followed by number, '(', or another unary operator, got %s", next.Value)
 				}
 			}
 		case NUMBER:

@@ -188,3 +188,79 @@ func TestParseNegativeNumbers(t *testing.T) {
 		})
 	}
 }
+
+func TestParseUnaryPlus(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected float64
+	}{
+		{
+			name:     "unary_plus_simple",
+			input:    "+5",
+			expected: 5.0,
+		},
+		{
+			name:     "unary_plus_preserves_negative",
+			input:    "+(100 - 200)",
+			expected: -100.0,
+		},
+		{
+			name:     "unary_plus_with_addition",
+			input:    "+10 + 5",
+			expected: 15.0,
+		},
+		{
+			name:     "binary_plus_with_unary_plus",
+			input:    "10 + +5",
+			expected: 15.0,
+		},
+		{
+			name:     "unary_plus_natural_language",
+			input:    "plus five",
+			expected: 5.0,
+		},
+		{
+			name:     "unary_plus_then_subtraction",
+			input:    "plus ten minus five",
+			expected: 5.0,
+		},
+		{
+			name:     "unary_plus_with_multiplication",
+			input:    "+5 * 3",
+			expected: 15.0,
+		},
+		{
+			name:     "mixed_unary_plus_and_minus",
+			input:    "+10 - 5",
+			expected: 5.0,
+		},
+		{
+			name:     "unary_plus_after_unary_minus",
+			input:    "-+5",
+			expected: -5.0,
+		},
+		{
+			name:     "double_unary_plus",
+			input:    "+(+5)",
+			expected: 5.0,
+		},
+		{
+			name:     "unary_plus_complex_expression",
+			input:    "+(10 + 5) * 2",
+			expected: 30.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Parse(tt.input, nil)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tt.expected {
+				t.Errorf("Expected %f, got %f", tt.expected, result)
+			}
+		})
+	}
+}

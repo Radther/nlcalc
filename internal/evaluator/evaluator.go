@@ -70,33 +70,53 @@ func evaluateExpression(tokens []tokenizer.Token) (float64, error) {
 	return evaluateSimpleExpression(expression)
 }
 
-// processUnaryOperators handles unary minus operators by converting them
-// to negative numbers. It scans for [UNARY_OPERATOR, NUMBER] patterns and
-// replaces them with negative NUMBER tokens.
+// processUnaryOperators handles unary operators (+ and -) by applying them to numbers.
+// Unary minus negates the value, unary plus is identity (returns value unchanged).
+// It scans for [UNARY_OPERATOR, NUMBER] patterns and replaces them with modified NUMBER tokens.
+// This function is called iteratively until no more unary operators remain, to handle
+// cases like consecutive unary operators (e.g., -+5 or +-5).
 func processUnaryOperators(tokens []tokenizer.Token) []tokenizer.Token {
-	result := make([]tokenizer.Token, 0, len(tokens))
+	result := tokens
 
-	for i := 0; i < len(tokens); i++ {
-		// Check for unary operator followed by a number
-		if tokens[i].Type == tokenizer.UNARY_OPERATOR &&
-		   i+1 < len(tokens) &&
-		   tokens[i+1].Type == tokenizer.NUMBER {
+	// Keep processing until no more unary operators can be reduced
+	for {
+		changed := false
+		newResult := make([]tokenizer.Token, 0, len(result))
 
-			// Parse the number and negate it
-			value, err := strconv.ParseFloat(tokens[i+1].Value, 64)
-			if err == nil {
-				// Create a negative number token
-				result = append(result, tokenizer.Token{
-					Type:  tokenizer.NUMBER,
-					Value: strconv.FormatFloat(-value, 'f', -1, 64),
-				})
-				i++ // Skip the number token since we've processed it
+		for i := 0; i < len(result); i++ {
+			// Check for unary operator followed by a number
+			if result[i].Type == tokenizer.UNARY_OPERATOR &&
+			   i+1 < len(result) &&
+			   result[i+1].Type == tokenizer.NUMBER {
+
+				// Parse the number and apply the unary operator
+				value, err := strconv.ParseFloat(result[i+1].Value, 64)
+				if err == nil {
+					var newValue float64
+					if result[i].Value == "-" {
+						newValue = -value // Negate
+					} else {
+						newValue = value // Identity (unary +)
+					}
+
+					newResult = append(newResult, tokenizer.Token{
+						Type:  tokenizer.NUMBER,
+						Value: strconv.FormatFloat(newValue, 'f', -1, 64),
+					})
+					i++ // Skip the number token since we've processed it
+					changed = true
+				} else {
+					// If parsing fails, keep original tokens
+					newResult = append(newResult, result[i])
+				}
 			} else {
-				// If parsing fails, keep original tokens
-				result = append(result, tokens[i])
+				newResult = append(newResult, result[i])
 			}
-		} else {
-			result = append(result, tokens[i])
+		}
+
+		result = newResult
+		if !changed {
+			break
 		}
 	}
 
