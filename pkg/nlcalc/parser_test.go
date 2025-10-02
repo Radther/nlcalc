@@ -107,3 +107,84 @@ func TestParseWithVariables(t *testing.T) {
 		})
 	}
 }
+
+func TestParseNegativeNumbers(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected float64
+	}{
+		{
+			name:     "negative_number_symbol",
+			input:    "-2000",
+			expected: -2000.0,
+		},
+		{
+			name:     "negative_written_twice",
+			input:    "minus twenty minus 10",
+			expected: -30.0,
+		},
+		{
+			name:     "subtraction",
+			input:    "10 - 5",
+			expected: 5.0,
+		},
+		{
+			name:     "negative_plus_positive",
+			input:    "-10 + 5",
+			expected: -5.0,
+		},
+		{
+			name:     "positive_plus_negative",
+			input:    "10 + -5",
+			expected: 5.0,
+		},
+		{
+			name:     "negative_parentheses",
+			input:    "-(10 + 5)",
+			expected: -15.0,
+		},
+		{
+			name:     "addition_with_negative_parentheses",
+			input:    "10 + -(2 + 4)",
+			expected: 4.0,
+		},
+		{
+			name:     "negative_written_number",
+			input:    "minus ten",
+			expected: -10.0,
+		},
+		{
+			name:     "multiplication_with_negative",
+			input:    "10 * -5",
+			expected: -50.0,
+		},
+		{
+			name:     "double_negative",
+			input:    "-(-5)",
+			expected: 5.0,
+		},
+		{
+			name:     "complex_negative_expression",
+			input:    "-10 + 5 * -2",
+			expected: -20.0,
+		},
+		{
+			name:     "negative_with_parentheses_and_precedence",
+			input:    "-(2 + 3) * 4",
+			expected: -20.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Parse(tt.input, nil)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if result != tt.expected {
+				t.Errorf("Expected %f, got %f", tt.expected, result)
+			}
+		})
+	}
+}

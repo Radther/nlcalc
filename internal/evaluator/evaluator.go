@@ -70,6 +70,39 @@ func evaluateExpression(tokens []tokenizer.Token) (float64, error) {
 	return evaluateSimpleExpression(expression)
 }
 
+// processUnaryOperators handles unary minus operators by converting them
+// to negative numbers. It scans for [UNARY_OPERATOR, NUMBER] patterns and
+// replaces them with negative NUMBER tokens.
+func processUnaryOperators(tokens []tokenizer.Token) []tokenizer.Token {
+	result := make([]tokenizer.Token, 0, len(tokens))
+
+	for i := 0; i < len(tokens); i++ {
+		// Check for unary operator followed by a number
+		if tokens[i].Type == tokenizer.UNARY_OPERATOR &&
+		   i+1 < len(tokens) &&
+		   tokens[i+1].Type == tokenizer.NUMBER {
+
+			// Parse the number and negate it
+			value, err := strconv.ParseFloat(tokens[i+1].Value, 64)
+			if err == nil {
+				// Create a negative number token
+				result = append(result, tokenizer.Token{
+					Type:  tokenizer.NUMBER,
+					Value: strconv.FormatFloat(-value, 'f', -1, 64),
+				})
+				i++ // Skip the number token since we've processed it
+			} else {
+				// If parsing fails, keep original tokens
+				result = append(result, tokens[i])
+			}
+		} else {
+			result = append(result, tokens[i])
+		}
+	}
+
+	return result
+}
+
 func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 	if len(tokens) == 0 {
 		return 0.0, errors.New("empty expression")
@@ -82,8 +115,8 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 		return 0.0, errors.New("invalid single token")
 	}
 
-	expression := make([]tokenizer.Token, len(tokens))
-	copy(expression, tokens)
+	// Process unary operators first
+	expression := processUnaryOperators(tokens)
 
 	for {
 		opIndex := findHighestPrecedenceOperator(expression)

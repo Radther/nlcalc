@@ -163,6 +163,99 @@ func TestEvaluate(t *testing.T) {
 			expected: 0.0,
 			hasError: true,
 		},
+		{
+			name: "negative_number_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "2000"},
+			},
+			expected: -2000.0,
+			hasError: false,
+		},
+		{
+			name: "negative_plus_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "20"},
+				{Type: tokenizer.OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "10"},
+			},
+			expected: -30.0,
+			hasError: false,
+		},
+		{
+			name: "addition_with_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "10"},
+				{Type: tokenizer.OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: -5.0,
+			hasError: false,
+		},
+		{
+			name: "positive_plus_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "10"},
+				{Type: tokenizer.OPERATOR, Value: "+"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: 5.0,
+			hasError: false,
+		},
+		{
+			name: "negative_parentheses",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.PARENTHESIS, Value: "("},
+				{Type: tokenizer.NUMBER, Value: "10"},
+				{Type: tokenizer.OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+				{Type: tokenizer.PARENTHESIS, Value: ")"},
+			},
+			expected: -15.0,
+			hasError: false,
+		},
+		{
+			name: "addition_with_negative_parentheses",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "10"},
+				{Type: tokenizer.OPERATOR, Value: "+"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.PARENTHESIS, Value: "("},
+				{Type: tokenizer.NUMBER, Value: "2"},
+				{Type: tokenizer.OPERATOR, Value: "+"},
+				{Type: tokenizer.NUMBER, Value: "4"},
+				{Type: tokenizer.PARENTHESIS, Value: ")"},
+			},
+			expected: 4.0,
+			hasError: false,
+		},
+		{
+			name: "multiplication_with_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "10"},
+				{Type: tokenizer.OPERATOR, Value: "*"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+			},
+			expected: -50.0,
+			hasError: false,
+		},
+		{
+			name: "double_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.PARENTHESIS, Value: "("},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "5"},
+				{Type: tokenizer.PARENTHESIS, Value: ")"},
+			},
+			expected: 5.0,
+			hasError: false,
+		},
 	}
 
 	for _, tt := range tests {

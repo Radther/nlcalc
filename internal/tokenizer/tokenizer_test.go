@@ -148,6 +148,87 @@ func TestTokenize(t *testing.T) {
 			},
 			hasError: false,
 		},
+		{
+			name:  "negative_number_at_start",
+			input: "-2000",
+			expected: []Token{
+				{Type: UNARY_OPERATOR, Value: "-"},
+				{Type: NUMBER, Value: "2000"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "negative_after_operator",
+			input: "10 + -5",
+			expected: []Token{
+				{Type: NUMBER, Value: "10"},
+				{Type: OPERATOR, Value: "+"},
+				{Type: UNARY_OPERATOR, Value: "-"},
+				{Type: NUMBER, Value: "5"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "binary_subtraction",
+			input: "10 - 5",
+			expected: []Token{
+				{Type: NUMBER, Value: "10"},
+				{Type: OPERATOR, Value: "-"},
+				{Type: NUMBER, Value: "5"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "unary_minus_in_parentheses",
+			input: "-(10 + 5)",
+			expected: []Token{
+				{Type: UNARY_OPERATOR, Value: "-"},
+				{Type: PARENTHESIS, Value: "("},
+				{Type: NUMBER, Value: "10"},
+				{Type: OPERATOR, Value: "+"},
+				{Type: NUMBER, Value: "5"},
+				{Type: PARENTHESIS, Value: ")"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "unary_minus_after_opening_paren",
+			input: "10 + -(2 + 4)",
+			expected: []Token{
+				{Type: NUMBER, Value: "10"},
+				{Type: OPERATOR, Value: "+"},
+				{Type: UNARY_OPERATOR, Value: "-"},
+				{Type: PARENTHESIS, Value: "("},
+				{Type: NUMBER, Value: "2"},
+				{Type: OPERATOR, Value: "+"},
+				{Type: NUMBER, Value: "4"},
+				{Type: PARENTHESIS, Value: ")"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "double_unary_minus",
+			input: "-(-5)",
+			expected: []Token{
+				{Type: UNARY_OPERATOR, Value: "-"},
+				{Type: PARENTHESIS, Value: "("},
+				{Type: UNARY_OPERATOR, Value: "-"},
+				{Type: NUMBER, Value: "5"},
+				{Type: PARENTHESIS, Value: ")"},
+			},
+			hasError: false,
+		},
+		{
+			name:  "mixed_unary_and_binary_minus",
+			input: "-20 - 10",
+			expected: []Token{
+				{Type: UNARY_OPERATOR, Value: "-"},
+				{Type: NUMBER, Value: "20"},
+				{Type: OPERATOR, Value: "-"},
+				{Type: NUMBER, Value: "10"},
+			},
+			hasError: false,
+		},
 	}
 
 	for _, tt := range tests {
