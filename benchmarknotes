@@ -1,0 +1,52 @@
+# Pre-optimisation benchmarks
+
+❯ go test -bench=. -benchmem ./internal/normalizer
+goos: linux
+goarch: amd64
+pkg: github.com/radther/nlcalc/internal/normalizer
+cpu: AMD Ryzen 5 3600 6-Core Processor
+BenchmarkNormalize_Simple-12                       10000            146867 ns/op           96928 B/op        807 allocs/op
+BenchmarkNormalize_Complex-12                       5684            219012 ns/op          100797 B/op        817 allocs/op
+BenchmarkNormalize_CompoundNumbers-12               7768            211993 ns/op          100407 B/op        810 allocs/op
+BenchmarkNormalize_WithVariables-12                 6308            199352 ns/op          107966 B/op        912 allocs/op
+BenchmarkNormalize_Functions-12                     5463            187076 ns/op           98823 B/op        810 allocs/op
+BenchmarkNormalize_PowerOperations-12               7329            169422 ns/op           98149 B/op        813 allocs/op
+BenchmarkNormalize_Percentage-12                    5359            206014 ns/op          100392 B/op        817 allocs/op
+BenchmarkNormalize_Batch-12                          759           1699621 ns/op         1025746 B/op       8600 allocs/op
+BenchmarkNormalize_LargeScale-12                      91          16139357 ns/op         9797623 B/op      80840 allocs/op
+PASS
+ok      github.com/radther/nlcalc/internal/normalizer   13.929s
+
+❯ go test -bench=. -benchmem ./internal/normalizer
+goos: linux
+goarch: amd64
+pkg: github.com/radther/nlcalc/internal/normalizer
+cpu: AMD Ryzen 5 3600 6-Core Processor
+BenchmarkNormalize_Simple-12                        8356            151052 ns/op           96941 B/op        807 allocs/op
+BenchmarkNormalize_Complex-12                       5476            224123 ns/op          100611 B/op        817 allocs/op
+BenchmarkNormalize_CompoundNumbers-12               5508            205094 ns/op          100399 B/op        810 allocs/op
+BenchmarkNormalize_WithVariables-12                 7803            202266 ns/op          107930 B/op        912 allocs/op
+BenchmarkNormalize_Functions-12                     5674            177057 ns/op           98776 B/op        810 allocs/op
+BenchmarkNormalize_PowerOperations-12               7015            165699 ns/op           97988 B/op        813 allocs/op
+BenchmarkNormalize_Percentage-12                    5559            200682 ns/op          100428 B/op        817 allocs/op
+BenchmarkNormalize_Batch-12                          670           1703929 ns/op         1026887 B/op       8600 allocs/op
+BenchmarkNormalize_LargeScale-12                      85          16116024 ns/op         9784224 B/op      80838 allocs/op
+PASS
+ok      github.com/radther/nlcalc/internal/normalizer   12.340s
+
+❯ go test -bench=. -benchmem ./internal/normalizer
+goos: linux
+goarch: amd64
+pkg: github.com/radther/nlcalc/internal/normalizer
+cpu: AMD Ryzen 5 3600 6-Core Processor
+BenchmarkNormalize_Simple-12                       10000            147674 ns/op           96879 B/op        807 allocs/op
+BenchmarkNormalize_Complex-12                       4698            226837 ns/op          100672 B/op        817 allocs/op
+BenchmarkNormalize_CompoundNumbers-12               6819            211193 ns/op          100361 B/op        810 allocs/op
+BenchmarkNormalize_WithVariables-12                 6273            205172 ns/op          107930 B/op        912 allocs/op
+BenchmarkNormalize_Functions-12                     6621            186242 ns/op           98752 B/op        810 allocs/op
+BenchmarkNormalize_PowerOperations-12               6088            172946 ns/op           98168 B/op        813 allocs/op
+BenchmarkNormalize_Percentage-12                    5593            208438 ns/op          100496 B/op        817 allocs/op
+BenchmarkNormalize_Batch-12                          692           1728637 ns/op         1026132 B/op       8600 allocs/op
+BenchmarkNormalize_LargeScale-12                      82          16310552 ns/op         9777942 B/op      80837 allocs/op
+PASS
+ok      github.com/radther/nlcalc/internal/normalizer   12.524s
