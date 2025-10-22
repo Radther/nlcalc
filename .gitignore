@@ -1,0 +1,8 @@
+# Compiled binaries
+nlcalc
+
+# Test binaries
+*.test
+
+# Go workspace file
+go.work
