@@ -72,6 +72,22 @@ func buildCompoundNumberPattern() string {
 	return `\b(?:(?:` + strings.Join(allWords, "|") + `)\s*)+\b`
 }
 
+// buildDecimalNumberPattern creates a regex pattern for decimal numbers (e.g., "one point five")
+func buildDecimalNumberPattern() string {
+	allWords := make([]string, 0, len(numberWords)+len(scaleWords)+1)
+	for word := range numberWords {
+		allWords = append(allWords, word)
+	}
+	for word := range scaleWords {
+		allWords = append(allWords, word)
+	}
+	allWords = append(allWords, "and")
+	sort.Strings(allWords) // Sort for deterministic pattern
+	numberWordsPattern := strings.Join(allWords, "|")
+	// Pattern: (number words) point (number words)
+	return `\b(?:(?:` + numberWordsPattern + `)\s*)+\s+point\s+(?:(?:` + numberWordsPattern + `)\s*)+\b`
+}
+
 // Compile regex patterns once at package level - built from maps for single source of truth
 var individualWordPattern = regexp.MustCompile(buildNumberWordsPattern(numberWords))
 
@@ -118,8 +134,9 @@ var (
 
 // Pre-compiled utility regexes
 var (
-	whitespaceRegex = regexp.MustCompile(`\s+`)
-	numberPattern   = regexp.MustCompile(buildCompoundNumberPattern())
+	whitespaceRegex    = regexp.MustCompile(`\s+`)
+	numberPattern      = regexp.MustCompile(buildCompoundNumberPattern())
+	decimalPattern     = regexp.MustCompile(buildDecimalNumberPattern())
 )
 
 func parseNumberPhrase(phrase string) (int, bool) {
@@ -201,6 +218,53 @@ func hasRecentScaleContext(words []string, andPos int) bool {
 	return false
 }
 
+// parseDecimalPhrase parses a decimal number phrase like "one point five" into "1.5"
+func parseDecimalPhrase(phrase string) (string, bool) {
+	words := strings.Fields(strings.ToLower(phrase))
+	if len(words) < 3 {
+		return "", false
+	}
+
+	// Find the "point" keyword
+	pointIndex := -1
+	for i, word := range words {
+		if word == "point" {
+			pointIndex = i
+			break
+		}
+	}
+
+	if pointIndex == -1 || pointIndex == 0 || pointIndex == len(words)-1 {
+		return "", false
+	}
+
+	// Parse integer part (before "point")
+	integerPart := strings.Join(words[:pointIndex], " ")
+	integerValue, ok := parseNumberPhrase(integerPart)
+	if !ok {
+		return "", false
+	}
+
+	// Parse decimal part (after "point") - each word becomes a digit
+	decimalPart := ""
+	for _, word := range words[pointIndex+1:] {
+		if word == "and" {
+			continue
+		}
+		if val, exists := numberWords[word]; exists {
+			decimalPart += strconv.Itoa(val)
+		} else {
+			return "", false
+		}
+	}
+
+	if decimalPart == "" {
+		return "", false
+	}
+
+	return strconv.Itoa(integerValue) + "." + decimalPart, true
+}
+
 // replaceVariables replaces variable names in the input string with their numeric values.
 // Variables are sorted by length (descending) to ensure longer variable names are replaced first,
 // preventing partial replacements (e.g., "xx" should not become "valuex" when both "x" and "xx" exist).
@@ -275,8 +339,15 @@ func Normalize(input string, variables map[string]float64) string {
 	result = multiplyRegex.ReplaceAllString(result, " * ")
 	result = divideRegex.ReplaceAllString(result, " / ")
 
-	// Single number pattern - handles both compound and individual numbers
+	// Handle decimal numbers first (e.g., "one point five" → "1.5")
+	result = decimalPattern.ReplaceAllStringFunc(result, func(match string) string {
+		if decimal, ok := parseDecimalPhrase(match); ok {
+			return decimal
+		}
+		return match
+	})
 
+	// Single number pattern - handles both compound and individual numbers
 	result = numberPattern.ReplaceAllStringFunc(result, func(match string) string {
 		// Try compound number parsing first (handles complex cases and validation)
 		if num, ok := parseNumberPhrase(match); ok {

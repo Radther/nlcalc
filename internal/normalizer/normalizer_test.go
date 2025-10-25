@@ -216,6 +216,52 @@ func TestNormalize(t *testing.T) {
 			input:    "two times square root of 16",
 			expected: "2 * sqrt of 16",
 		},
+		// Decimal numbers
+		{
+			name:     "decimal_one_point_five",
+			input:    "one point five",
+			expected: "1.5",
+		},
+		{
+			name:     "decimal_two_point_seven_five",
+			input:    "two point seven five",
+			expected: "2.75",
+		},
+		{
+			name:     "decimal_zero_point_five",
+			input:    "zero point five",
+			expected: "0.5",
+		},
+		{
+			name:     "decimal_ten_point_two_five",
+			input:    "ten point two five",
+			expected: "10.25",
+		},
+		{
+			name:     "decimal_in_expression",
+			input:    "one point five plus two point five",
+			expected: "1.5 + 2.5",
+		},
+		{
+			name:     "decimal_with_operations",
+			input:    "three point five times two",
+			expected: "3.5 * 2",
+		},
+		{
+			name:     "decimal_complex_integer_part",
+			input:    "twenty five point seven five",
+			expected: "25.75",
+		},
+		{
+			name:     "decimal_hundred_point_five",
+			input:    "one hundred point five",
+			expected: "100.5",
+		},
+		{
+			name:     "decimal_compound_number",
+			input:    "one hundred and twenty three point four five",
+			expected: "123.45",
+		},
 	}
 
 	for _, tt := range tests {
