@@ -549,6 +549,198 @@ func TestEvaluateFunctions(t *testing.T) {
 			expected: 0.0,
 			hasError: true, // log(0) is error
 		},
+		// Cube root tests
+		{
+			name: "cbrt_positive",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "cbrt"},
+				{Type: tokenizer.NUMBER, Value: "27"},
+			},
+			expected: 3.0, // cbrt(27) = 3
+			hasError: false,
+		},
+		{
+			name: "cbrt_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "cbrt"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "8"},
+			},
+			expected: -2.0, // cbrt(-8) = -2
+			hasError: false,
+		},
+		// Inverse trigonometric tests
+		{
+			name: "asin_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "asin"},
+				{Type: tokenizer.NUMBER, Value: "0.5"},
+			},
+			expected: 0.5235987755982989, // asin(0.5) = π/6 ≈ 0.524
+			hasError: false,
+		},
+		{
+			name: "asin_domain_error_high",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "asin"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 0.0,
+			hasError: true, // asin(2) is out of domain
+		},
+		{
+			name: "asin_domain_error_low",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "asin"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 0.0,
+			hasError: true, // asin(-2) is out of domain
+		},
+		{
+			name: "acos_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acos"},
+				{Type: tokenizer.NUMBER, Value: "0.5"},
+			},
+			expected: 1.0471975511965979, // acos(0.5) = π/3 ≈ 1.047
+			hasError: false,
+		},
+		{
+			name: "acos_domain_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acos"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 0.0,
+			hasError: true, // acos(2) is out of domain
+		},
+		{
+			name: "atan_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "atan"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 0.7853981633974483, // atan(1) = π/4 ≈ 0.785
+			hasError: false,
+		},
+		// Hyperbolic function tests
+		{
+			name: "sinh_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "sinh"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 1.1752011936438014, // sinh(1) ≈ 1.175
+			hasError: false,
+		},
+		{
+			name: "cosh_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "cosh"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 1.5430806348152437, // cosh(1) ≈ 1.543
+			hasError: false,
+		},
+		{
+			name: "tanh_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "tanh"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 0.7615941559557649, // tanh(1) ≈ 0.762
+			hasError: false,
+		},
+		// Rounding function tests
+		{
+			name: "floor_positive",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "floor"},
+				{Type: tokenizer.NUMBER, Value: "3.7"},
+			},
+			expected: 3.0, // floor(3.7) = 3
+			hasError: false,
+		},
+		{
+			name: "floor_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "floor"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "3.7"},
+			},
+			expected: -4.0, // floor(-3.7) = -4
+			hasError: false,
+		},
+		{
+			name: "ceil_positive",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "ceil"},
+				{Type: tokenizer.NUMBER, Value: "3.2"},
+			},
+			expected: 4.0, // ceil(3.2) = 4
+			hasError: false,
+		},
+		{
+			name: "ceil_negative",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "ceil"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "3.2"},
+			},
+			expected: -3.0, // ceil(-3.2) = -3
+			hasError: false,
+		},
+		{
+			name: "round_up",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "round"},
+				{Type: tokenizer.NUMBER, Value: "3.7"},
+			},
+			expected: 4.0, // round(3.7) = 4
+			hasError: false,
+		},
+		{
+			name: "round_down",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "round"},
+				{Type: tokenizer.NUMBER, Value: "3.2"},
+			},
+			expected: 3.0, // round(3.2) = 3
+			hasError: false,
+		},
+		{
+			name: "round_half",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "round"},
+				{Type: tokenizer.NUMBER, Value: "3.5"},
+			},
+			expected: 4.0, // round(3.5) = 4 (rounds to even)
+			hasError: false,
+		},
+		// Combined new function tests
+		{
+			name: "cbrt_in_expression",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.NUMBER, Value: "2"},
+				{Type: tokenizer.OPERATOR, Value: "*"},
+				{Type: tokenizer.FUNCTION, Value: "cbrt"},
+				{Type: tokenizer.NUMBER, Value: "8"},
+			},
+			expected: 4.0, // 2 * cbrt(8) = 2 * 2 = 4
+			hasError: false,
+		},
+		{
+			name: "floor_ceil_nested",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "floor"},
+				{Type: tokenizer.FUNCTION, Value: "ceil"},
+				{Type: tokenizer.NUMBER, Value: "3.2"},
+			},
+			expected: 4.0, // floor(ceil(3.2)) = floor(4) = 4
+			hasError: false,
+		},
 	}
 
 	for _, tt := range tests {

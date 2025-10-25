@@ -151,6 +151,91 @@ func TestNormalize(t *testing.T) {
 			expected: "tan 45",
 		},
 		{
+			name:     "cube_root",
+			input:    "cube root 27",
+			expected: "cbrt 27",
+		},
+		{
+			name:     "cuberoot",
+			input:    "cuberoot 27",
+			expected: "cbrt 27",
+		},
+		{
+			name:     "arcsine",
+			input:    "arcsine 0.5",
+			expected: "asin 0.5",
+		},
+		{
+			name:     "arc_sine",
+			input:    "arc sine 0.5",
+			expected: "asin 0.5",
+		},
+		{
+			name:     "arcsin",
+			input:    "arcsin 0.5",
+			expected: "asin 0.5",
+		},
+		{
+			name:     "arccosine",
+			input:    "arccosine 0.5",
+			expected: "acos 0.5",
+		},
+		{
+			name:     "arc_cosine",
+			input:    "arc cosine 0.5",
+			expected: "acos 0.5",
+		},
+		{
+			name:     "arccos",
+			input:    "arccos 0.5",
+			expected: "acos 0.5",
+		},
+		{
+			name:     "arctangent",
+			input:    "arctangent 1",
+			expected: "atan 1",
+		},
+		{
+			name:     "arc_tangent",
+			input:    "arc tangent 1",
+			expected: "atan 1",
+		},
+		{
+			name:     "arctan",
+			input:    "arctan 1",
+			expected: "atan 1",
+		},
+		{
+			name:     "hyperbolic_sine",
+			input:    "hyperbolic sine 1",
+			expected: "sinh 1",
+		},
+		{
+			name:     "hyperbolic_cosine",
+			input:    "hyperbolic cosine 1",
+			expected: "cosh 1",
+		},
+		{
+			name:     "hyperbolic_tangent",
+			input:    "hyperbolic tangent 1",
+			expected: "tanh 1",
+		},
+		{
+			name:     "ceiling",
+			input:    "ceiling 3.7",
+			expected: "ceil 3.7",
+		},
+		{
+			name:     "floor",
+			input:    "floor 3.7",
+			expected: "floor 3.7",
+		},
+		{
+			name:     "round",
+			input:    "round 3.7",
+			expected: "round 3.7",
+		},
+		{
 			name:     "nested_functions",
 			input:    "square root squareroot 16",
 			expected: "sqrt sqrt 16",

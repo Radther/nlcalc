@@ -96,11 +96,29 @@ var (
 	naturalLogarithmRegex = regexp.MustCompile(`\bnatural logarithm\b`)
 	squareRootRegex       = regexp.MustCompile(`\bsquare root\b`)
 	squarerootRegex       = regexp.MustCompile(`\bsquareroot\b`)
+	cubeRootRegex         = regexp.MustCompile(`\bcube root\b`)
+	cuberootRegex         = regexp.MustCompile(`\bcuberoot\b`)
 	absoluteRegex         = regexp.MustCompile(`\babsolute\b`)
 	logarithmRegex        = regexp.MustCompile(`\blogarithm\b`)
 	sineRegex             = regexp.MustCompile(`\bsine\b`)
 	cosineRegex           = regexp.MustCompile(`\bcosine\b`)
 	tangentRegex          = regexp.MustCompile(`\btangent\b`)
+	// Inverse trigonometric functions
+	arcsineRegex        = regexp.MustCompile(`\barc sine\b`)
+	arcsinRegex         = regexp.MustCompile(`\barcsin\b`)
+	arcsineAltRegex     = regexp.MustCompile(`\barcsine\b`)
+	arccosineRegex      = regexp.MustCompile(`\barc cosine\b`)
+	arccosRegex         = regexp.MustCompile(`\barccos\b`)
+	arccosineAltRegex   = regexp.MustCompile(`\barccosine\b`)
+	arctangentRegex     = regexp.MustCompile(`\barc tangent\b`)
+	arctanRegex         = regexp.MustCompile(`\barctan\b`)
+	arctangentAltRegex  = regexp.MustCompile(`\barctangent\b`)
+	// Hyperbolic functions
+	hyperbolicSineRegex     = regexp.MustCompile(`\bhyperbolic sine\b`)
+	hyperbolicCosineRegex   = regexp.MustCompile(`\bhyperbolic cosine\b`)
+	hyperbolicTangentRegex  = regexp.MustCompile(`\bhyperbolic tangent\b`)
+	// Rounding functions
+	ceilingRegex = regexp.MustCompile(`\bceiling\b`)
 )
 
 // Pre-compiled regexes for basic operations
@@ -258,11 +276,30 @@ func Normalize(input string, variables map[string]float64) string {
 	result = naturalLogarithmRegex.ReplaceAllString(result, "ln ")  // Must be before "logarithm"
 	result = squareRootRegex.ReplaceAllString(result, "sqrt ")
 	result = squarerootRegex.ReplaceAllString(result, "sqrt ")
+	result = cubeRootRegex.ReplaceAllString(result, "cbrt ")
+	result = cuberootRegex.ReplaceAllString(result, "cbrt ")
 	result = absoluteRegex.ReplaceAllString(result, "abs ")
 	result = logarithmRegex.ReplaceAllString(result, "log ")
+	// Inverse trigonometric functions - longer phrases first
+	result = arcsineRegex.ReplaceAllString(result, "asin ")        // "arc sine" before "arcsine"
+	result = arcsineAltRegex.ReplaceAllString(result, "asin ")     // "arcsine" before "arcsin"
+	result = arcsinRegex.ReplaceAllString(result, "asin ")
+	result = arccosineRegex.ReplaceAllString(result, "acos ")      // "arc cosine" before "arccosine"
+	result = arccosineAltRegex.ReplaceAllString(result, "acos ")   // "arccosine" before "arccos"
+	result = arccosRegex.ReplaceAllString(result, "acos ")
+	result = arctangentRegex.ReplaceAllString(result, "atan ")     // "arc tangent" before "arctangent"
+	result = arctangentAltRegex.ReplaceAllString(result, "atan ")  // "arctangent" before "arctan"
+	result = arctanRegex.ReplaceAllString(result, "atan ")
+	// Hyperbolic functions - longer phrases first
+	result = hyperbolicSineRegex.ReplaceAllString(result, "sinh ")
+	result = hyperbolicCosineRegex.ReplaceAllString(result, "cosh ")
+	result = hyperbolicTangentRegex.ReplaceAllString(result, "tanh ")
+	// Basic trigonometric functions
 	result = sineRegex.ReplaceAllString(result, "sin ")
 	result = cosineRegex.ReplaceAllString(result, "cos ")
 	result = tangentRegex.ReplaceAllString(result, "tan ")
+	// Rounding functions
+	result = ceilingRegex.ReplaceAllString(result, "ceil ")
 
 	// Handle basic arithmetic operations
 	result = addedToRegex.ReplaceAllString(result, " + ")   // Must be before "add"

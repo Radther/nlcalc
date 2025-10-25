@@ -9,13 +9,13 @@ import (
 
 // Clean removes all non-mathematical text from a normalized expression.
 // It extracts and preserves only numbers, operators (+, -, *, /, ^), parentheses,
-// function names (sqrt, abs, log, ln, sin, cos, tan), and percentage conversion tokens.
+// function names (sqrt, cbrt, abs, log, ln, sin, cos, tan, asin, acos, atan, sinh, cosh, tanh, floor, ceil, round), and percentage conversion tokens.
 // Filler words like "what is" are removed.
 // Returns a cleaned string containing only mathematical tokens, ready for tokenization.
 func Clean(input string) string {
 	// Define what constitutes valid mathematical tokens
 	// Numbers (including decimals), operators, parentheses, and function names
-	mathTokenPattern := regexp.MustCompile(`(\d+(?:\.\d+)?|[+\-*/()^]|\*\s*0\.01\s*\*|sqrt|abs|log|ln|sin|cos|tan)`)
+	mathTokenPattern := regexp.MustCompile(`(\d+(?:\.\d+)?|[+\-*/()^]|\*\s*0\.01\s*\*|sqrt|cbrt|abs|log|ln|sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|floor|ceil|round)`)
 
 	// Find all mathematical tokens
 	tokens := mathTokenPattern.FindAllString(input, -1)

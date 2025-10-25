@@ -39,7 +39,7 @@ var (
 	operatorPattern    = regexp.MustCompile(`[+\-*/^]`)
 	parenthesisPattern = regexp.MustCompile(`[()]`)
 	whitespacePattern  = regexp.MustCompile(`\s+`)
-	functionPattern    = regexp.MustCompile(`^(sqrt|abs|log|ln|sin|cos|tan)`)
+	functionPattern    = regexp.MustCompile(`^(sqrt|cbrt|abs|log|ln|sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|floor|ceil|round)`)
 )
 
 // isUnaryContext determines if the current position represents a unary operator context.

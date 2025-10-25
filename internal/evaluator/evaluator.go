@@ -320,6 +320,8 @@ func applyFunction(name string, value float64) (float64, error) {
 			return 0, errors.New("square root of negative number")
 		}
 		return math.Sqrt(value), nil
+	case "cbrt":
+		return math.Cbrt(value), nil
 	case "abs":
 		return math.Abs(value), nil
 	case "log":
@@ -338,6 +340,30 @@ func applyFunction(name string, value float64) (float64, error) {
 		return math.Cos(value), nil
 	case "tan":
 		return math.Tan(value), nil
+	case "asin":
+		if value < -1 || value > 1 {
+			return 0, errors.New("arcsine domain error: input must be in [-1, 1]")
+		}
+		return math.Asin(value), nil
+	case "acos":
+		if value < -1 || value > 1 {
+			return 0, errors.New("arccosine domain error: input must be in [-1, 1]")
+		}
+		return math.Acos(value), nil
+	case "atan":
+		return math.Atan(value), nil
+	case "sinh":
+		return math.Sinh(value), nil
+	case "cosh":
+		return math.Cosh(value), nil
+	case "tanh":
+		return math.Tanh(value), nil
+	case "floor":
+		return math.Floor(value), nil
+	case "ceil":
+		return math.Ceil(value), nil
+	case "round":
+		return math.Round(value), nil
 	default:
 		return 0, errors.New("unknown function: " + name)
 	}
