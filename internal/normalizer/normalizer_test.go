@@ -262,6 +262,42 @@ func TestNormalize(t *testing.T) {
 			input:    "one hundred and twenty three point four five",
 			expected: "123.45",
 		},
+		// Compound decimals (after "point")
+		{
+			name:     "decimal_compound_forty_five",
+			input:    "ten point forty five",
+			expected: "10.45",
+		},
+		{
+			name:     "decimal_compound_fifteen",
+			input:    "ten point fifteen",
+			expected: "10.15",
+		},
+		{
+			name:     "decimal_compound_ninety_nine",
+			input:    "five point ninety nine",
+			expected: "5.99",
+		},
+		{
+			name:     "decimal_compound_hundred_twenty_three",
+			input:    "ten point one hundred and twenty three",
+			expected: "10.123",
+		},
+		{
+			name:     "decimal_compound_in_expression",
+			input:    "two point twenty five plus three point seventy five",
+			expected: "2.25 + 3.75",
+		},
+		{
+			name:     "decimal_fallback_digit_by_digit",
+			input:    "ten point zero five",
+			expected: "10.05",
+		},
+		{
+			name:     "decimal_compound_with_operation",
+			input:    "twelve point fifty times two",
+			expected: "12.50 * 2",
+		},
 	}
 
 	for _, tt := range tests {

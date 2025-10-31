@@ -218,6 +218,42 @@ func hasRecentScaleContext(words []string, andPos int) bool {
 	return false
 }
 
+// isProperCompoundDecimal checks if decimal words form a proper compound number
+// vs a digit-by-digit sequence. For example:
+// - "forty five" is a proper compound (tens + ones pattern)
+// - "seven five" is NOT (two ones should be digit-by-digit: 7, 5)
+func isProperCompoundDecimal(words []string) bool {
+	if len(words) == 0 {
+		return false
+	}
+
+	// Single word is always a valid compound (e.g., "fifteen", "twenty")
+	if len(words) == 1 {
+		return true
+	}
+
+	// Check if it contains scale words (hundred, thousand, etc.) - always compound
+	for _, word := range words {
+		if _, isScale := scaleWords[word]; isScale {
+			return true
+		}
+	}
+
+	// For multi-word decimals without scales, check if first word is a tens word
+	// "forty five" (tens + ones) is valid compound
+	// "seven five" (ones + ones) is digit-by-digit
+	firstWord := words[0]
+	if val, exists := numberWords[firstWord]; exists {
+		// If first word is >= 20 and divisible by 10, it's a tens word
+		if val >= 20 && val%10 == 0 {
+			return true
+		}
+	}
+
+	// Multiple single-digit words should be treated digit-by-digit
+	return false
+}
+
 // parseDecimalPhrase parses a decimal number phrase like "one point five" into "1.5"
 func parseDecimalPhrase(phrase string) (string, bool) {
 	words := strings.Fields(strings.ToLower(phrase))
@@ -245,16 +281,29 @@ func parseDecimalPhrase(phrase string) (string, bool) {
 		return "", false
 	}
 
-	// Parse decimal part (after "point") - each word becomes a digit
+	// Parse decimal part (after "point")
+	decimalWords := words[pointIndex+1:]
+	decimalPhrase := strings.Join(decimalWords, " ")
 	decimalPart := ""
-	for _, word := range words[pointIndex+1:] {
-		if word == "and" {
-			continue
+
+	// Try compound parsing if it looks like a proper compound
+	if isProperCompoundDecimal(decimalWords) {
+		if decimalValue, ok := parseNumberPhrase(decimalPhrase); ok {
+			decimalPart = strconv.Itoa(decimalValue)
 		}
-		if val, exists := numberWords[word]; exists {
-			decimalPart += strconv.Itoa(val)
-		} else {
-			return "", false
+	}
+
+	// If compound parsing didn't work, use digit-by-digit fallback
+	if decimalPart == "" {
+		for _, word := range decimalWords {
+			if word == "and" {
+				continue
+			}
+			if val, exists := numberWords[word]; exists {
+				decimalPart += strconv.Itoa(val)
+			} else {
+				return "", false
+			}
 		}
 	}
 
