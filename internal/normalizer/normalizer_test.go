@@ -294,3 +294,99 @@ func TestNormalizeWithVariables(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeWithBuiltInConstants(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "pi_constant",
+			input:    "pi times two",
+			expected: "3.141592653589793 * 2",
+		},
+		{
+			name:     "e_constant",
+			input:    "e plus one",
+			expected: "2.718281828459045 + 1",
+		},
+		{
+			name:     "tau_constant",
+			input:    "tau divided by two",
+			expected: "6.283185307179586 / 2",
+		},
+		{
+			name:     "phi_constant",
+			input:    "phi times phi",
+			expected: "1.618033988749895 * 1.618033988749895",
+		},
+		{
+			name:     "multiple_constants",
+			input:    "pi plus e",
+			expected: "3.141592653589793 + 2.718281828459045",
+		},
+		{
+			name:     "constant_with_written_numbers",
+			input:    "two times pi",
+			expected: "2 * 3.141592653589793",
+		},
+		{
+			name:     "constant_case_insensitive",
+			input:    "PI plus E",
+			expected: "3.141592653589793 + 2.718281828459045",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Normalize(tt.input, nil)
+			if result != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestNormalizeUserVariablesOverrideBuiltInConstants(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		variables map[string]float64
+		expected  string
+	}{
+		{
+			name:      "user_pi_overrides_builtin",
+			input:     "pi times two",
+			variables: map[string]float64{"pi": 3.14},
+			expected:  "3.14 * 2",
+		},
+		{
+			name:      "user_e_overrides_builtin",
+			input:     "e plus one",
+			variables: map[string]float64{"e": 2.72},
+			expected:  "2.72 + 1",
+		},
+		{
+			name:      "partial_override",
+			input:     "pi plus e",
+			variables: map[string]float64{"pi": 3},
+			expected:  "3 + 2.718281828459045",
+		},
+		{
+			name:      "user_variable_and_builtin_constant",
+			input:     "x times pi",
+			variables: map[string]float64{"x": 5},
+			expected:  "5 * 3.141592653589793",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Normalize(tt.input, tt.variables)
+			if result != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}

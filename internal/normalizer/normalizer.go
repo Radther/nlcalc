@@ -48,6 +48,15 @@ var scaleWords = map[string]int{
 	"billion":  1000000000,
 }
 
+// builtInConstants defines mathematical constants available as built-in variables.
+// These are lower priority than user-provided variables.
+var builtInConstants = map[string]float64{
+	"pi":  3.141592653589793, // Ratio of circle's circumference to diameter
+	"e":   2.718281828459045, // Euler's number, base of natural logarithms
+	"tau": 6.283185307179586, // Full circle constant (2π)
+	"phi": 1.618033988749895, // Golden ratio
+}
+
 // buildNumberWordsPattern creates a regex pattern from map keys
 func buildNumberWordsPattern(words map[string]int) string {
 	keys := make([]string, 0, len(words))
@@ -234,12 +243,15 @@ func replaceVariables(input string, variables map[string]float64) string {
 // It transforms written numbers ("ten" → "10"), operation words ("plus" → "+", "power" → "^"),
 // percentage notations ("20% of" → "* 0.01 *"), and power shortcuts ("squared" → "^ 2") into symbolic form.
 // Variables from the optional map are replaced with their numeric values before other transformations.
+// Built-in constants (pi, e, tau, phi) are also available but have lower priority than user variables.
 // Returns a normalized string ready for cleaning and tokenization.
 func Normalize(input string, variables map[string]float64) string {
 	result := strings.ToLower(input)
 
-	// Replace variables first, before other transformations
+	// Replace user variables first (highest priority), then built-in constants (lower priority)
+	// This ensures user-provided variables override built-in constants
 	result = replaceVariables(result, variables)
+	result = replaceVariables(result, builtInConstants)
 
 	// Handle percentage operations - order matters (longer phrases first)
 	result = percentageRegex.ReplaceAllString(result, " * 0.01 * ")
