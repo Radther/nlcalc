@@ -235,6 +235,135 @@ func TestNormalize(t *testing.T) {
 			input:    "round 3.7",
 			expected: "round 3.7",
 		},
+		// Exponential and logarithmic functions
+		{
+			name:     "exponential",
+			input:    "exponential 1",
+			expected: "exp 1",
+		},
+		{
+			name:     "exp",
+			input:    "exp 2",
+			expected: "exp 2",
+		},
+		{
+			name:     "expm1",
+			input:    "expm1 0.5",
+			expected: "expm1 0.5",
+		},
+		{
+			name:     "log2",
+			input:    "log2 8",
+			expected: "log2 8",
+		},
+		{
+			name:     "logarithm_base_2",
+			input:    "logarithm base 2 of 8",
+			expected: "log2 of 8",
+		},
+		{
+			name:     "log_two",
+			input:    "log two 8",
+			expected: "log2 8",
+		},
+		{
+			name:     "log1p",
+			input:    "log1p 0.5",
+			expected: "log1p 0.5",
+		},
+		// Extended trigonometric functions
+		{
+			name:     "secant",
+			input:    "secant 0",
+			expected: "sec 0",
+		},
+		{
+			name:     "cosecant",
+			input:    "cosecant 1",
+			expected: "csc 1",
+		},
+		{
+			name:     "cotangent",
+			input:    "cotangent 1",
+			expected: "cot 1",
+		},
+		// Inverse extended trigonometric functions
+		{
+			name:     "arcsecant",
+			input:    "arcsecant 2",
+			expected: "asec 2",
+		},
+		{
+			name:     "arc_secant",
+			input:    "arc secant 2",
+			expected: "asec 2",
+		},
+		{
+			name:     "arcsec",
+			input:    "arcsec 2",
+			expected: "asec 2",
+		},
+		{
+			name:     "arccosecant",
+			input:    "arccosecant 2",
+			expected: "acsc 2",
+		},
+		{
+			name:     "arc_cosecant",
+			input:    "arc cosecant 2",
+			expected: "acsc 2",
+		},
+		{
+			name:     "arccsc",
+			input:    "arccsc 2",
+			expected: "acsc 2",
+		},
+		{
+			name:     "arccotangent",
+			input:    "arccotangent 1",
+			expected: "acot 1",
+		},
+		{
+			name:     "arc_cotangent",
+			input:    "arc cotangent 1",
+			expected: "acot 1",
+		},
+		{
+			name:     "arccot",
+			input:    "arccot 1",
+			expected: "acot 1",
+		},
+		// Inverse hyperbolic functions
+		{
+			name:     "inverse_hyperbolic_sine",
+			input:    "inverse hyperbolic sine 1",
+			expected: "asinh 1",
+		},
+		{
+			name:     "arcsinh",
+			input:    "arcsinh 1",
+			expected: "asinh 1",
+		},
+		{
+			name:     "inverse_hyperbolic_cosine",
+			input:    "inverse hyperbolic cosine 2",
+			expected: "acosh 2",
+		},
+		{
+			name:     "arccosh",
+			input:    "arccosh 2",
+			expected: "acosh 2",
+		},
+		{
+			name:     "inverse_hyperbolic_tangent",
+			input:    "inverse hyperbolic tangent 0.5",
+			expected: "atanh 0.5",
+		},
+		{
+			name:     "arctanh",
+			input:    "arctanh 0.5",
+			expected: "atanh 0.5",
+		},
 		{
 			name:     "nested_functions",
 			input:    "square root squareroot 16",

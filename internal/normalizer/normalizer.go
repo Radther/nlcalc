@@ -117,6 +117,33 @@ var (
 	hyperbolicSineRegex     = regexp.MustCompile(`\bhyperbolic sine\b`)
 	hyperbolicCosineRegex   = regexp.MustCompile(`\bhyperbolic cosine\b`)
 	hyperbolicTangentRegex  = regexp.MustCompile(`\bhyperbolic tangent\b`)
+	// Inverse hyperbolic functions
+	inverseHyperbolicSineRegex    = regexp.MustCompile(`\binverse hyperbolic sine\b`)
+	inverseHyperbolicCosineRegex  = regexp.MustCompile(`\binverse hyperbolic cosine\b`)
+	inverseHyperbolicTangentRegex = regexp.MustCompile(`\binverse hyperbolic tangent\b`)
+	arcsinhRegex                  = regexp.MustCompile(`\barcsinh\b`)
+	arccoshRegex                  = regexp.MustCompile(`\barccosh\b`)
+	arctanhRegex                  = regexp.MustCompile(`\barctanh\b`)
+	// Extended trigonometric functions
+	secantRegex    = regexp.MustCompile(`\bsecant\b`)
+	cosecantRegex  = regexp.MustCompile(`\bcosecant\b`)
+	cotangentRegex = regexp.MustCompile(`\bcotangent\b`)
+	// Inverse extended trigonometric functions
+	arcsecantRegex     = regexp.MustCompile(`\barc secant\b`)
+	arcsecRegex        = regexp.MustCompile(`\barcsec\b`)
+	arcsecantAltRegex  = regexp.MustCompile(`\barcsecant\b`)
+	arccosecantRegex   = regexp.MustCompile(`\barc cosecant\b`)
+	arccscRegex        = regexp.MustCompile(`\barccsc\b`)
+	arccosecantAltRegex = regexp.MustCompile(`\barccosecant\b`)
+	arccotangentRegex  = regexp.MustCompile(`\barc cotangent\b`)
+	arccotRegex        = regexp.MustCompile(`\barccot\b`)
+	arccotangentAltRegex = regexp.MustCompile(`\barccotangent\b`)
+	// Exponential and logarithmic functions
+	exponentialRegex = regexp.MustCompile(`\bexponential\b`)
+	logarithmBase2Regex = regexp.MustCompile(`\blogarithm base 2\b`)
+	log2WordRegex = regexp.MustCompile(`\blog two\b`)
+	expm1Regex = regexp.MustCompile(`\bexpm1\b`)
+	log1pRegex = regexp.MustCompile(`\blog1p\b`)
 	// Rounding functions
 	ceilingRegex = regexp.MustCompile(`\bceiling\b`)
 )
@@ -274,6 +301,8 @@ func Normalize(input string, variables map[string]float64) string {
 	// Handle function phrases - convert natural language to function names
 	// Order matters: longer phrases must be matched before shorter ones
 	result = naturalLogarithmRegex.ReplaceAllString(result, "ln ")  // Must be before "logarithm"
+	result = logarithmBase2Regex.ReplaceAllString(result, "log2 ")  // Must be before general "logarithm"
+	result = log2WordRegex.ReplaceAllString(result, "log2 ")
 	result = squareRootRegex.ReplaceAllString(result, "sqrt ")
 	result = squarerootRegex.ReplaceAllString(result, "sqrt ")
 	result = cubeRootRegex.ReplaceAllString(result, "cbrt ")
@@ -290,10 +319,35 @@ func Normalize(input string, variables map[string]float64) string {
 	result = arctangentRegex.ReplaceAllString(result, "atan ")     // "arc tangent" before "arctangent"
 	result = arctangentAltRegex.ReplaceAllString(result, "atan ")  // "arctangent" before "arctan"
 	result = arctanRegex.ReplaceAllString(result, "atan ")
+	// Exponential and logarithmic functions
+	result = exponentialRegex.ReplaceAllString(result, "exp ")
+	result = expm1Regex.ReplaceAllString(result, "expm1 ")
+	result = log1pRegex.ReplaceAllString(result, "log1p ")
+	// Inverse hyperbolic functions - longer phrases first
+	result = inverseHyperbolicSineRegex.ReplaceAllString(result, "asinh ")
+	result = inverseHyperbolicCosineRegex.ReplaceAllString(result, "acosh ")
+	result = inverseHyperbolicTangentRegex.ReplaceAllString(result, "atanh ")
+	result = arcsinhRegex.ReplaceAllString(result, "asinh ")
+	result = arccoshRegex.ReplaceAllString(result, "acosh ")
+	result = arctanhRegex.ReplaceAllString(result, "atanh ")
 	// Hyperbolic functions - longer phrases first
 	result = hyperbolicSineRegex.ReplaceAllString(result, "sinh ")
 	result = hyperbolicCosineRegex.ReplaceAllString(result, "cosh ")
 	result = hyperbolicTangentRegex.ReplaceAllString(result, "tanh ")
+	// Inverse extended trigonometric functions - longer phrases first
+	result = arcsecantRegex.ReplaceAllString(result, "asec ")
+	result = arcsecantAltRegex.ReplaceAllString(result, "asec ")
+	result = arcsecRegex.ReplaceAllString(result, "asec ")
+	result = arccosecantRegex.ReplaceAllString(result, "acsc ")
+	result = arccosecantAltRegex.ReplaceAllString(result, "acsc ")
+	result = arccscRegex.ReplaceAllString(result, "acsc ")
+	result = arccotangentRegex.ReplaceAllString(result, "acot ")
+	result = arccotangentAltRegex.ReplaceAllString(result, "acot ")
+	result = arccotRegex.ReplaceAllString(result, "acot ")
+	// Extended trigonometric functions
+	result = secantRegex.ReplaceAllString(result, "sec ")
+	result = cosecantRegex.ReplaceAllString(result, "csc ")
+	result = cotangentRegex.ReplaceAllString(result, "cot ")
 	// Basic trigonometric functions
 	result = sineRegex.ReplaceAllString(result, "sin ")
 	result = cosineRegex.ReplaceAllString(result, "cos ")

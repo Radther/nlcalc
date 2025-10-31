@@ -741,6 +741,249 @@ func TestEvaluateFunctions(t *testing.T) {
 			expected: 4.0, // floor(ceil(3.2)) = floor(4) = 4
 			hasError: false,
 		},
+		// Exponential and logarithmic tests
+		{
+			name: "exp_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "exp"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 2.718281828459045, // exp(1) = e
+			hasError: false,
+		},
+		{
+			name: "exp_zero",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "exp"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 1.0, // exp(0) = 1
+			hasError: false,
+		},
+		{
+			name: "expm1_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "expm1"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 0.0, // expm1(0) = 0
+			hasError: false,
+		},
+		{
+			name: "log2_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log2"},
+				{Type: tokenizer.NUMBER, Value: "8"},
+			},
+			expected: 3.0, // log2(8) = 3
+			hasError: false,
+		},
+		{
+			name: "log2_negative_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log2"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 0.0,
+			hasError: true, // log2(-1) is error
+		},
+		{
+			name: "log1p_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log1p"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 0.0, // log1p(0) = log(1) = 0
+			hasError: false,
+		},
+		{
+			name: "log1p_domain_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log1p"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 0.0,
+			hasError: true, // log1p(-2) is error (must be > -1)
+		},
+		// Extended trigonometric tests
+		{
+			name: "sec_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "sec"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 1.0, // sec(0) = 1/cos(0) = 1
+			hasError: false,
+		},
+		{
+			name: "csc_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "csc"},
+				{Type: tokenizer.NUMBER, Value: "1.5707963267948966"}, // π/2
+			},
+			expected: 1.0, // csc(π/2) = 1/sin(π/2) = 1
+			hasError: false,
+		},
+		{
+			name: "cot_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "cot"},
+				{Type: tokenizer.NUMBER, Value: "0.7853981633974483"}, // π/4
+			},
+			expected: 1.0, // cot(π/4) = 1/tan(π/4) = 1
+			hasError: false,
+		},
+		// Inverse extended trigonometric tests
+		{
+			name: "asec_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "asec"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 1.0471975511965976, // asec(2) = acos(1/2) = π/3
+			hasError: false,
+		},
+		{
+			name: "asec_domain_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "asec"},
+				{Type: tokenizer.NUMBER, Value: "0.5"},
+			},
+			expected: 0.0,
+			hasError: true, // asec(0.5) is error (must be >= 1 or <= -1)
+		},
+		{
+			name: "acsc_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acsc"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 0.5235987755982989, // acsc(2) = asin(1/2) = π/6
+			hasError: false,
+		},
+		{
+			name: "acsc_domain_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acsc"},
+				{Type: tokenizer.NUMBER, Value: "0.5"},
+			},
+			expected: 0.0,
+			hasError: true, // acsc(0.5) is error
+		},
+		{
+			name: "acot_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acot"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 0.7853981633974483, // acot(1) = π/4
+			hasError: false,
+		},
+		{
+			name: "acot_zero",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acot"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 1.5707963267948966, // acot(0) = π/2
+			hasError: false,
+		},
+		// Inverse hyperbolic tests
+		{
+			name: "asinh_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "asinh"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 0.0, // asinh(0) = 0
+			hasError: false,
+		},
+		{
+			name: "asinh_positive",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "asinh"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 0.881373587019543, // asinh(1) ≈ 0.881
+			hasError: false,
+		},
+		{
+			name: "acosh_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acosh"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 0.0, // acosh(1) = 0
+			hasError: false,
+		},
+		{
+			name: "acosh_positive",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acosh"},
+				{Type: tokenizer.NUMBER, Value: "2"},
+			},
+			expected: 1.3169578969248166, // acosh(2) ≈ 1.317
+			hasError: false,
+		},
+		{
+			name: "acosh_domain_error",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "acosh"},
+				{Type: tokenizer.NUMBER, Value: "0.5"},
+			},
+			expected: 0.0,
+			hasError: true, // acosh(0.5) is error (must be >= 1)
+		},
+		{
+			name: "atanh_simple",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "atanh"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 0.0, // atanh(0) = 0
+			hasError: false,
+		},
+		{
+			name: "atanh_positive",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "atanh"},
+				{Type: tokenizer.NUMBER, Value: "0.5"},
+			},
+			expected: 0.5493061443340548, // atanh(0.5) ≈ 0.549
+			hasError: false,
+		},
+		{
+			name: "atanh_domain_error_high",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "atanh"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 0.0,
+			hasError: true, // atanh(1) is error (must be in (-1, 1))
+		},
+		{
+			name: "atanh_domain_error_low",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "atanh"},
+				{Type: tokenizer.UNARY_OPERATOR, Value: "-"},
+				{Type: tokenizer.NUMBER, Value: "1"},
+			},
+			expected: 0.0,
+			hasError: true, // atanh(-1) is error
+		},
+		// Combined new function tests
+		{
+			name: "exp_log2_combined",
+			tokens: []tokenizer.Token{
+				{Type: tokenizer.FUNCTION, Value: "log2"},
+				{Type: tokenizer.FUNCTION, Value: "exp"},
+				{Type: tokenizer.NUMBER, Value: "0"},
+			},
+			expected: 0.0, // log2(exp(0)) = log2(1) = 0
+			hasError: false,
+		},
 	}
 
 	for _, tt := range tests {

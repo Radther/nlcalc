@@ -364,6 +364,69 @@ func applyFunction(name string, value float64) (float64, error) {
 		return math.Ceil(value), nil
 	case "round":
 		return math.Round(value), nil
+	// Exponential and logarithmic functions
+	case "exp":
+		return math.Exp(value), nil
+	case "expm1":
+		return math.Expm1(value), nil
+	case "log2":
+		if value <= 0 {
+			return 0, errors.New("logarithm base 2 of non-positive number")
+		}
+		return math.Log2(value), nil
+	case "log1p":
+		if value <= -1 {
+			return 0, errors.New("log1p domain error: input must be greater than -1")
+		}
+		return math.Log1p(value), nil
+	// Extended trigonometric functions
+	case "sec":
+		cosValue := math.Cos(value)
+		if cosValue == 0 {
+			return 0, errors.New("secant undefined: division by zero (cosine is zero)")
+		}
+		return 1 / cosValue, nil
+	case "csc":
+		sinValue := math.Sin(value)
+		if sinValue == 0 {
+			return 0, errors.New("cosecant undefined: division by zero (sine is zero)")
+		}
+		return 1 / sinValue, nil
+	case "cot":
+		tanValue := math.Tan(value)
+		if tanValue == 0 {
+			return 0, errors.New("cotangent undefined: division by zero (tangent is zero)")
+		}
+		return 1 / tanValue, nil
+	// Inverse extended trigonometric functions
+	case "asec":
+		if value > -1 && value < 1 {
+			return 0, errors.New("arcsecant domain error: input must be >= 1 or <= -1")
+		}
+		return math.Acos(1 / value), nil
+	case "acsc":
+		if value > -1 && value < 1 {
+			return 0, errors.New("arccosecant domain error: input must be >= 1 or <= -1")
+		}
+		return math.Asin(1 / value), nil
+	case "acot":
+		if value == 0 {
+			return math.Pi / 2, nil
+		}
+		return math.Atan(1 / value), nil
+	// Inverse hyperbolic functions
+	case "asinh":
+		return math.Asinh(value), nil
+	case "acosh":
+		if value < 1 {
+			return 0, errors.New("inverse hyperbolic cosine domain error: input must be >= 1")
+		}
+		return math.Acosh(value), nil
+	case "atanh":
+		if value <= -1 || value >= 1 {
+			return 0, errors.New("inverse hyperbolic tangent domain error: input must be in (-1, 1)")
+		}
+		return math.Atanh(value), nil
 	default:
 		return 0, errors.New("unknown function: " + name)
 	}
