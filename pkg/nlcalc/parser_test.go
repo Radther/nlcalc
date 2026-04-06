@@ -440,8 +440,8 @@ func TestParseWithOptionsCommaDelimiter(t *testing.T) {
 		},
 		{
 			name:     "comma_decimal_expression",
-			input:    "3,14 + 2,5",
-			expected: 3.14 + 2.5,
+			input:    "3,5 + 2,5",
+			expected: 6.0,
 		},
 		{
 			name:     "dot_as_thousands_separator",

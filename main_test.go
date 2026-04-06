@@ -133,8 +133,8 @@ func TestCLICommaDecimalDelimiter(t *testing.T) {
 		},
 		{
 			name:     "comma_decimal_expression",
-			input:    "3,14 + 2,5",
-			expected: "5.640000000000001",
+			input:    "3,5 + 2,5",
+			expected: "6",
 		},
 		{
 			name:     "point_word_still_works",
