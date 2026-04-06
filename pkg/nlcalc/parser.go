@@ -8,6 +8,8 @@
 //   - Parentheses for grouping: "(10 + 5) * 2"
 //   - Variables: custom named values passed as a map
 //   - Standard order of operations (PEMDAS/BODMAS)
+//   - Thousands separators: "10,000" → 10000 (default), "10.000" → 10000 (comma decimal mode)
+//   - Decimal separator word: "ten point two" → 10.2
 //
 // Example usage:
 //
@@ -24,6 +26,10 @@
 //	vars := map[string]float64{"price": 100, "tax": 0.15}
 //	result, err = nlcalc.Parse("price plus price times tax", vars)
 //	fmt.Println(result) // Output: 115
+//
+//	// With comma as decimal delimiter (European notation)
+//	result, err = nlcalc.ParseWithOptions("1.000,83 + 2,5", nil, nlcalc.Options{DecimalDelimiter: ','})
+//	fmt.Println(result) // Output: 1003.33
 package nlcalc
 
 import (
@@ -33,28 +39,22 @@ import (
 	"github.com/radther/nlcalc/internal/tokenizer"
 )
 
-// Parse converts a natural language mathematical expression into a calculated result.
+// Options configures parsing behavior.
+type Options struct {
+	// DecimalDelimiter specifies the character used as the decimal separator in numeric input.
+	// Use '.' (default, zero value) for standard notation (e.g. "3.14") or ',' for European
+	// notation (e.g. "3,14"). The alternate character is treated as a thousands separator and
+	// stripped automatically (e.g. "1,000" → 1000 in default mode; "1.000" → 1000 in comma mode).
+	// The word "point" is always recognized as a decimal separator regardless of this setting.
+	DecimalDelimiter rune
+}
+
+// ParseWithOptions converts a natural language mathematical expression into a calculated result,
+// using the provided options to control parsing behavior.
 //
-// The function accepts expressions in various formats:
-//   - Written numbers: "five hundred twenty three"
-//   - Words for operations: "ten plus five", "twenty minus eight"
-//   - Standard math symbols: "5 + 10", "100 / 4"
-//   - Percentages: "15% of 200", "50 percent of 80"
-//   - Mixed formats: "twenty * 3", "5 plus ten"
-//   - Parentheses: "(10 + 5) * 2"
-//   - Variables: Named values provided in the variables map
-//
-// The variables parameter is optional (can be nil). Variable names in the input
-// will be replaced with their corresponding numeric values before evaluation.
-// Variable names are case-insensitive and matched using word boundaries.
-//
-// Order of operations follows standard PEMDAS/BODMAS rules.
-// For example, "10 + 10 * 4" evaluates to 50 (not 80).
-//
-// Returns an error if the expression is invalid, contains unrecognized
-// characters, has malformed syntax, or attempts division by zero.
-func Parse(input string, variables map[string]float64) (float64, error) {
-	normalized := normalizer.Normalize(input, variables)
+// See Parse for a full description of supported expression formats.
+func ParseWithOptions(input string, variables map[string]float64, options Options) (float64, error) {
+	normalized := normalizer.Normalize(input, variables, options.DecimalDelimiter)
 	cleaned := cleaner.Clean(normalized)
 	tokens, err := tokenizer.Tokenize(cleaned)
 	if err != nil {
@@ -67,4 +67,30 @@ func Parse(input string, variables map[string]float64) (float64, error) {
 	}
 
 	return result, nil
+}
+
+// Parse converts a natural language mathematical expression into a calculated result.
+//
+// The function accepts expressions in various formats:
+//   - Written numbers: "five hundred twenty three"
+//   - Words for operations: "ten plus five", "twenty minus eight"
+//   - Standard math symbols: "5 + 10", "100 / 4"
+//   - Percentages: "15% of 200", "50 percent of 80"
+//   - Mixed formats: "twenty * 3", "5 plus ten"
+//   - Parentheses: "(10 + 5) * 2"
+//   - Variables: Named values provided in the variables map
+//   - Thousands separators: "10,000" → 10000 (comma is stripped as thousands separator)
+//   - Decimal word: "ten point two" → 10.2
+//
+// The variables parameter is optional (can be nil). Variable names in the input
+// will be replaced with their corresponding numeric values before evaluation.
+// Variable names are case-insensitive and matched using word boundaries.
+//
+// Order of operations follows standard PEMDAS/BODMAS rules.
+// For example, "10 + 10 * 4" evaluates to 50 (not 80).
+//
+// Returns an error if the expression is invalid, contains unrecognized
+// characters, has malformed syntax, or attempts division by zero.
+func Parse(input string, variables map[string]float64) (float64, error) {
+	return ParseWithOptions(input, variables, Options{})
 }

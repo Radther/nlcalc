@@ -239,14 +239,49 @@ func replaceVariables(input string, variables map[string]float64) string {
 	return result
 }
 
+// pointBetweenDigitsPattern matches the word "point" used as a decimal separator between digits.
+// Uses \s* (zero or more spaces) because the number word pattern may consume trailing whitespace,
+// leaving "point" adjacent to the preceding digit (e.g. "ten point two" → "10point 2").
+var pointBetweenDigitsPattern = regexp.MustCompile(`(\d)\s*point\s*(\d)`)
+
 // Normalize converts a raw input string into a normalized mathematical expression.
 // It transforms written numbers ("ten" → "10"), operation words ("plus" → "+", "power" → "^"),
 // percentage notations ("20% of" → "* 0.01 *"), and power shortcuts ("squared" → "^ 2") into symbolic form.
 // Variables from the optional map are replaced with their numeric values before other transformations.
 // Built-in constants (pi, e, tau, phi) are also available but have lower priority than user variables.
+//
+// The decimalDelimiter parameter specifies the decimal separator character used in the input.
+// Use '.' (or 0 for default) for standard notation (e.g. "3.14") or ',' for European notation (e.g. "3,14").
+// The alternate character is treated as a thousands separator and stripped (e.g. "1,000" → "1000" in default mode,
+// "1.000" → "1000" in comma mode). The word "point" is always recognized as a decimal separator.
+//
 // Returns a normalized string ready for cleaning and tokenization.
-func Normalize(input string, variables map[string]float64) string {
+func Normalize(input string, variables map[string]float64, decimalDelimiter rune) string {
+	if decimalDelimiter == 0 {
+		decimalDelimiter = '.'
+	}
+
 	result := strings.ToLower(input)
+
+	// Determine the thousands separator (whichever character is NOT the decimal delimiter).
+	var thousandsSep rune
+	if decimalDelimiter == '.' {
+		thousandsSep = ','
+	} else {
+		thousandsSep = '.'
+	}
+
+	// Strip thousands separators (the alternate character when it appears between digits).
+	thousandsSepStr := regexp.QuoteMeta(string(thousandsSep))
+	thousandsPattern := regexp.MustCompile(`(\d)` + thousandsSepStr + `(\d)`)
+	result = thousandsPattern.ReplaceAllString(result, "${1}${2}")
+
+	// Normalize the decimal delimiter to '.' for standard downstream processing.
+	if decimalDelimiter != '.' {
+		delimStr := regexp.QuoteMeta(string(decimalDelimiter))
+		decimalPattern := regexp.MustCompile(`(\d)` + delimStr + `(\d)`)
+		result = decimalPattern.ReplaceAllString(result, "${1}.${2}")
+	}
 
 	// Replace user variables first (highest priority), then built-in constants (lower priority)
 	// This ensures user-provided variables override built-in constants
@@ -288,7 +323,6 @@ func Normalize(input string, variables map[string]float64) string {
 	result = divideRegex.ReplaceAllString(result, " / ")
 
 	// Single number pattern - handles both compound and individual numbers
-
 	result = numberPattern.ReplaceAllStringFunc(result, func(match string) string {
 		// Try compound number parsing first (handles complex cases and validation)
 		if num, ok := parseNumberPhrase(match); ok {
@@ -305,6 +339,10 @@ func Normalize(input string, variables map[string]float64) string {
 			return word
 		})
 	})
+
+	// Convert "point" used as a decimal separator (e.g. "ten point two" → "10.2").
+	// This runs after number word conversion so digit context is established.
+	result = pointBetweenDigitsPattern.ReplaceAllString(result, "${1}.${2}")
 
 	result = whitespaceRegex.ReplaceAllString(result, " ")
 	result = strings.TrimSpace(result)

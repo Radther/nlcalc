@@ -9,7 +9,7 @@ func BenchmarkNormalize_Simple(b *testing.B) {
 	input := "ten plus fifteen"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Normalize(input, nil)
+		_ = Normalize(input, nil, '.')
 	}
 }
 
@@ -18,7 +18,7 @@ func BenchmarkNormalize_Complex(b *testing.B) {
 	input := "twenty percent of square root of one hundred twenty five plus three squared"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Normalize(input, nil)
+		_ = Normalize(input, nil, '.')
 	}
 }
 
@@ -27,7 +27,7 @@ func BenchmarkNormalize_CompoundNumbers(b *testing.B) {
 	input := "two thousand five hundred and seventy three plus one hundred and forty two"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Normalize(input, nil)
+		_ = Normalize(input, nil, '.')
 	}
 }
 
@@ -42,7 +42,7 @@ func BenchmarkNormalize_WithVariables(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Normalize(input, vars)
+		_ = Normalize(input, vars, '.')
 	}
 }
 
@@ -51,7 +51,7 @@ func BenchmarkNormalize_Functions(b *testing.B) {
 	input := "square root of absolute value of sine of ninety"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Normalize(input, nil)
+		_ = Normalize(input, nil, '.')
 	}
 }
 
@@ -60,7 +60,7 @@ func BenchmarkNormalize_PowerOperations(b *testing.B) {
 	input := "five squared plus two raised to the power of three"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Normalize(input, nil)
+		_ = Normalize(input, nil, '.')
 	}
 }
 
@@ -69,7 +69,7 @@ func BenchmarkNormalize_Percentage(b *testing.B) {
 	input := "twenty percent of one hundred plus fifteen percentage of fifty"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = Normalize(input, nil)
+		_ = Normalize(input, nil, '.')
 	}
 }
 
@@ -92,7 +92,7 @@ func BenchmarkNormalize_Batch(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for _, input := range inputs {
-			_ = Normalize(input, vars)
+			_ = Normalize(input, vars, '.')
 		}
 	}
 }
@@ -111,7 +111,7 @@ func BenchmarkNormalize_LargeScale(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Simulate 100 calculations per iteration
 		for j := 0; j < 100; j++ {
-			_ = Normalize(inputs[j%len(inputs)], nil)
+			_ = Normalize(inputs[j%len(inputs)], nil, '.')
 		}
 	}
 }
