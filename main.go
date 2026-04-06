@@ -9,12 +9,14 @@ import (
 
 	"github.com/radther/nlcalc/internal/cleaner"
 	"github.com/radther/nlcalc/internal/evaluator"
+	"github.com/radther/nlcalc/internal/favourable"
 	"github.com/radther/nlcalc/internal/normalizer"
 	"github.com/radther/nlcalc/internal/tokenizer"
 )
 
 func main() {
 	verbose := flag.Bool("verbose", false, "Show detailed pipeline stages")
+	favourableFlag := flag.Bool("favourable", false, "Enable favourable parsing: recover calculable results from expressions with minor errors")
 	decimalDelimiterFlag := flag.String("decimal-delimiter", ".", "Decimal delimiter character ('.' or ',')")
 	flag.Parse()
 
@@ -48,7 +50,6 @@ func main() {
 
 	normalized := normalizer.Normalize(input, nil, decimalDelimiter)
 	cleaned := cleaner.Clean(normalized)
-	tokens, err := tokenizer.Tokenize(cleaned)
 
 	if *verbose {
 		fmt.Printf("Original: %s\n", input)
@@ -56,9 +57,29 @@ func main() {
 		fmt.Printf("Cleaned: %s\n", cleaned)
 	}
 
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Tokenization error: %s\n", err)
-		os.Exit(1)
+	var tokens []tokenizer.Token
+	var err error
+
+	if *favourableFlag {
+		tokens, err = tokenizer.TokenizeRaw(cleaned)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Tokenization error: %s\n", err)
+			os.Exit(1)
+		}
+		if *verbose {
+			tokenStrings := make([]string, len(tokens))
+			for i, token := range tokens {
+				tokenStrings[i] = token.String()
+			}
+			fmt.Printf("Tokens (pre-favourable): [%s]\n", strings.Join(tokenStrings, ", "))
+		}
+		tokens = favourable.Apply(tokens)
+	} else {
+		tokens, err = tokenizer.Tokenize(cleaned)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Tokenization error: %s\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if *verbose {

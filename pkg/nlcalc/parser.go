@@ -35,6 +35,7 @@ package nlcalc
 import (
 	"github.com/radther/nlcalc/internal/cleaner"
 	"github.com/radther/nlcalc/internal/evaluator"
+	"github.com/radther/nlcalc/internal/favourable"
 	"github.com/radther/nlcalc/internal/normalizer"
 	"github.com/radther/nlcalc/internal/tokenizer"
 )
@@ -47,6 +48,17 @@ type Options struct {
 	// stripped automatically (e.g. "1,000" → 1000 in default mode; "1.000" → 1000 in comma mode).
 	// The word "point" is always recognized as a decimal separator regardless of this setting.
 	DecimalDelimiter rune
+
+	// Favourable enables post-tokenization heuristics that attempt to recover a
+	// calculable expression from one that would otherwise be invalid. When true,
+	// the parser applies a set of recovery rules after tokenization:
+	//   - Leading/trailing operators and other invalid boundary tokens are stripped.
+	//   - Consecutive binary operators are collapsed to the first one.
+	//   - Unmatched parentheses are removed.
+	//
+	// Example: "* 10 +* 2 /" → recovered as "10 + 2" → result 12.
+	// Consecutive numbers (e.g. "10 15") are not recoverable and still return an error.
+	Favourable bool
 }
 
 // ParseWithOptions converts a natural language mathematical expression into a calculated result,
@@ -56,9 +68,21 @@ type Options struct {
 func ParseWithOptions(input string, variables map[string]float64, options Options) (float64, error) {
 	normalized := normalizer.Normalize(input, variables, options.DecimalDelimiter)
 	cleaned := cleaner.Clean(normalized)
-	tokens, err := tokenizer.Tokenize(cleaned)
-	if err != nil {
-		return 0, err
+
+	var tokens []tokenizer.Token
+	var err error
+
+	if options.Favourable {
+		tokens, err = tokenizer.TokenizeRaw(cleaned)
+		if err != nil {
+			return 0, err
+		}
+		tokens = favourable.Apply(tokens)
+	} else {
+		tokens, err = tokenizer.Tokenize(cleaned)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	result, err := evaluator.Evaluate(tokens)

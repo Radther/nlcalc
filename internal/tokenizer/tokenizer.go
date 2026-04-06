@@ -60,12 +60,11 @@ func isUnaryContext(tokens []Token) bool {
 	       (lastToken.Type == PARENTHESIS && lastToken.Value == "(")
 }
 
-// Tokenize parses a cleaned mathematical expression string into a slice of tokens.
-// It validates that numbers are valid, operators are recognized, and the token
-// sequence is syntactically correct (e.g., no consecutive operators or numbers).
-// Returns an error if the input is empty, contains unrecognized characters, or
-// has an invalid token sequence.
-func Tokenize(input string) ([]Token, error) {
+// TokenizeRaw parses a mathematical expression string into tokens without validating
+// the token sequence. This is useful when the caller wants to apply post-processing
+// (e.g., favourable parsing) before validation.
+// Returns an error only if the input is empty or contains unrecognized characters.
+func TokenizeRaw(input string) ([]Token, error) {
 	if strings.TrimSpace(input) == "" {
 		return nil, fmt.Errorf("empty input")
 	}
@@ -113,6 +112,20 @@ func Tokenize(input string) ([]Token, error) {
 		}
 
 		return nil, fmt.Errorf("unrecognized character: %c at position %d", input[i], i)
+	}
+
+	return tokens, nil
+}
+
+// Tokenize parses a cleaned mathematical expression string into a slice of tokens.
+// It validates that numbers are valid, operators are recognized, and the token
+// sequence is syntactically correct (e.g., no consecutive operators or numbers).
+// Returns an error if the input is empty, contains unrecognized characters, or
+// has an invalid token sequence.
+func Tokenize(input string) ([]Token, error) {
+	tokens, err := TokenizeRaw(input)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := validateTokenSequence(tokens); err != nil {
