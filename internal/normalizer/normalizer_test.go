@@ -243,6 +243,22 @@ func TestNormalize(t *testing.T) {
 			input:    "ten point two plus five",
 			expected: "10.2 + 5",
 		},
+		{
+			name:     "point_multi_digit_decimal",
+			input:    "ten point twenty two",
+			expected: "10.22",
+		},
+		{
+			name:     "point_not_between_digits_is_unchanged",
+			input:    "the point is five",
+			expected: "the point is 5",
+		},
+		// Negative with thousands separator
+		{
+			name:     "negative_with_thousands_separator",
+			input:    "minus 10,000",
+			expected: "- 10000",
+		},
 	}
 
 	for _, tt := range tests {

@@ -410,6 +410,21 @@ func TestParseThousandsSeparatorAndPoint(t *testing.T) {
 			input:    "ten point five plus one point five",
 			expected: 12.0,
 		},
+		{
+			name:     "point_word_multi_digit_decimal",
+			input:    "ten point twenty two",
+			expected: 10.22,
+		},
+		{
+			name:     "point_word_not_between_digits",
+			input:    "the point is five",
+			expected: 5.0,
+		},
+		{
+			name:     "negative_with_thousands_separator",
+			input:    "minus 10,000",
+			expected: -10000.0,
+		},
 	}
 
 	for _, tt := range tests {
