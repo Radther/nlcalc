@@ -379,6 +379,105 @@ func TestParsePowerOperations(t *testing.T) {
 		})
 	}
 }
+func TestParseThousandsSeparatorAndPoint(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected float64
+	}{
+		{
+			name:     "thousands_separator_comma",
+			input:    "10,000",
+			expected: 10000.0,
+		},
+		{
+			name:     "thousands_separator_large",
+			input:    "1,000,000",
+			expected: 1000000.0,
+		},
+		{
+			name:     "thousands_with_decimal",
+			input:    "1,000.83",
+			expected: 1000.83,
+		},
+		{
+			name:     "point_word_as_decimal",
+			input:    "ten point two",
+			expected: 10.2,
+		},
+		{
+			name:     "point_word_in_expression",
+			input:    "ten point five plus one point five",
+			expected: 12.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Parse(tt.input, nil)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if math.Abs(result-tt.expected) > 1e-9 {
+				t.Errorf("Expected %f, got %f", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestParseWithOptionsCommaDelimiter(t *testing.T) {
+	opts := Options{DecimalDelimiter: ','}
+
+	tests := []struct {
+		name     string
+		input    string
+		expected float64
+	}{
+		{
+			name:     "comma_decimal_simple",
+			input:    "3,14",
+			expected: 3.14,
+		},
+		{
+			name:     "comma_decimal_expression",
+			input:    "3,14 + 2,5",
+			expected: 3.14 + 2.5,
+		},
+		{
+			name:     "dot_as_thousands_separator",
+			input:    "10.000",
+			expected: 10000.0,
+		},
+		{
+			name:     "dot_thousands_with_comma_decimal",
+			input:    "1.000,83 + 2,5",
+			expected: 1003.33,
+		},
+		{
+			name:     "point_word_still_works",
+			input:    "ten point two",
+			expected: 10.2,
+		},
+		{
+			name:     "written_numbers_unaffected",
+			input:    "ten plus fifteen",
+			expected: 25.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ParseWithOptions(tt.input, nil, opts)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if math.Abs(result-tt.expected) > 1e-9 {
+				t.Errorf("Expected %f, got %f", tt.expected, result)
+			}
+		})
+	}
+}
+
 func TestParseFunctions(t *testing.T) {
 	tests := []struct {
 		name     string

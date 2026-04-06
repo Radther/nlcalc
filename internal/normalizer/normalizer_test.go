@@ -216,11 +216,38 @@ func TestNormalize(t *testing.T) {
 			input:    "two times square root of 16",
 			expected: "2 * sqrt of 16",
 		},
+		// Thousands separator (default dot-decimal mode, comma is thousands sep)
+		{
+			name:     "thousands_separator_simple",
+			input:    "10,000",
+			expected: "10000",
+		},
+		{
+			name:     "thousands_separator_large",
+			input:    "1,000,000",
+			expected: "1000000",
+		},
+		{
+			name:     "thousands_separator_with_decimal",
+			input:    "1,000.83",
+			expected: "1000.83",
+		},
+		// "point" as decimal separator word
+		{
+			name:     "point_as_decimal",
+			input:    "ten point two",
+			expected: "10.2",
+		},
+		{
+			name:     "point_as_decimal_in_expression",
+			input:    "ten point two plus five",
+			expected: "10.2 + 5",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Normalize(tt.input, nil)
+			result := Normalize(tt.input, nil, '.')
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
@@ -287,7 +314,7 @@ func TestNormalizeWithVariables(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Normalize(tt.input, tt.variables)
+			result := Normalize(tt.input, tt.variables, '.')
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
@@ -340,7 +367,7 @@ func TestNormalizeWithBuiltInConstants(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Normalize(tt.input, nil)
+			result := Normalize(tt.input, nil, '.')
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}
@@ -383,7 +410,50 @@ func TestNormalizeUserVariablesOverrideBuiltInConstants(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Normalize(tt.input, tt.variables)
+			result := Normalize(tt.input, tt.variables, '.')
+			if result != tt.expected {
+				t.Errorf("Expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestNormalizeCommaDecimalDelimiter(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "dot_as_thousands_separator",
+			input:    "10.000",
+			expected: "10000",
+		},
+		{
+			name:     "dot_thousands_with_comma_decimal",
+			input:    "1.000,83",
+			expected: "1000.83",
+		},
+		{
+			name:     "comma_decimal_simple",
+			input:    "3,14",
+			expected: "3.14",
+		},
+		{
+			name:     "comma_decimal_expression",
+			input:    "3,14 + 2,5",
+			expected: "3.14 + 2.5",
+		},
+		{
+			name:     "point_word_still_works",
+			input:    "ten point two",
+			expected: "10.2",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Normalize(tt.input, nil, ',')
 			if result != tt.expected {
 				t.Errorf("Expected %q, got %q", tt.expected, result)
 			}

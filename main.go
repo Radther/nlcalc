@@ -15,7 +15,15 @@ import (
 
 func main() {
 	verbose := flag.Bool("verbose", false, "Show detailed pipeline stages")
+	decimalDelimiterFlag := flag.String("decimal-delimiter", ".", "Decimal delimiter character ('.' or ',')")
 	flag.Parse()
+
+	// Parse and validate the decimal delimiter flag.
+	if len(*decimalDelimiterFlag) != 1 {
+		fmt.Fprintf(os.Stderr, "Error: --decimal-delimiter must be a single character, got %q\n", *decimalDelimiterFlag)
+		os.Exit(1)
+	}
+	decimalDelimiter := rune((*decimalDelimiterFlag)[0])
 
 	var input string
 
@@ -38,7 +46,7 @@ func main() {
 		return
 	}
 
-	normalized := normalizer.Normalize(input, nil)
+	normalized := normalizer.Normalize(input, nil, decimalDelimiter)
 	cleaned := cleaner.Clean(normalized)
 	tokens, err := tokenizer.Tokenize(cleaned)
 
