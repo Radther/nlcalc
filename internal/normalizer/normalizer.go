@@ -5,7 +5,6 @@ package normalizer
 
 import (
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -51,11 +50,20 @@ var scaleWords = map[string]int{
 // builtInConstants defines mathematical constants available as built-in variables.
 // These are lower priority than user-provided variables.
 var builtInConstants = map[string]float64{
-	"pi":  3.141592653589793, // Ratio of circle's circumference to diameter
-	"e":   2.718281828459045, // Euler's number, base of natural logarithms
-	"tau": 6.283185307179586, // Full circle constant (2π)
-	"phi": 1.618033988749895, // Golden ratio
+	"pi":  3.141592653589793,
+	"e":   2.718281828459045,
+	"tau": 6.283185307179586,
+	"phi": 1.618033988749895,
 }
+
+// builtInConstantStrs holds pre-formatted string values of built-in constants.
+var builtInConstantStrs = func() map[string]string {
+	m := make(map[string]string, len(builtInConstants))
+	for name, val := range builtInConstants {
+		m[name] = strconv.FormatFloat(val, 'f', -1, 64)
+	}
+	return m
+}()
 
 // phraseReplacement represents a multi-word phrase and its replacement.
 // The words field contains the remaining words after the first (the map key).
@@ -68,68 +76,68 @@ type phraseReplacement struct {
 // Entries with more words are listed first for greedy (longest) matching.
 var multiWordPhrases = map[string][]phraseReplacement{
 	"raised": {
-		{words: []string{"to", "the", "power", "of"}, replacement: " ^ "},
+		{words: []string{"to", "the", "power", "of"}, replacement: "^"},
 	},
 	"natural": {
-		{words: []string{"logarithm"}, replacement: "ln "},
+		{words: []string{"logarithm"}, replacement: "ln"},
 	},
 	"square": {
-		{words: []string{"root"}, replacement: "sqrt "},
+		{words: []string{"root"}, replacement: "sqrt"},
 	},
 	"divided": {
-		{words: []string{"by"}, replacement: " / "},
+		{words: []string{"by"}, replacement: "/"},
 	},
 	"added": {
-		{words: []string{"to"}, replacement: " + "},
+		{words: []string{"to"}, replacement: "+"},
 	},
 }
 
 // wordReplacements maps single keywords to their mathematical symbol replacements.
+// Values are trimmed — the word scanner handles inter-word spacing.
 var wordReplacements = map[string]string{
-	"percentage": " * 0.01 * ",
-	"percent":    " * 0.01 * ",
-	"squareroot": "sqrt ",
-	"squared":    " ^ 2",
-	"cubed":      " ^ 3",
-	"raised":     " ^ ",
-	"power":      " ^ ",
-	"absolute":   "abs ",
-	"logarithm":  "log ",
-	"sine":       "sin ",
-	"cosine":     "cos ",
-	"tangent":    "tan ",
-	"plus":       " + ",
-	"add":        " + ",
-	"minus":      " - ",
-	"subtract":   " - ",
-	"times":      " * ",
-	"multiply":   " * ",
-	"divide":     " / ",
+	"percentage": "* 0.01 *",
+	"percent":    "* 0.01 *",
+	"squareroot": "sqrt",
+	"squared":    "^ 2",
+	"cubed":      "^ 3",
+	"raised":     "^",
+	"power":      "^",
+	"absolute":   "abs",
+	"logarithm":  "log",
+	"sine":       "sin",
+	"cosine":     "cos",
+	"tangent":    "tan",
+	"plus":       "+",
+	"add":        "+",
+	"minus":      "-",
+	"subtract":   "-",
+	"times":      "*",
+	"multiply":   "*",
+	"divide":     "/",
 }
 
-// Pre-compiled utility regexes
-var (
-	whitespaceRegex = regexp.MustCompile(`\s+`)
-)
-
-// Pre-compiled delimiter patterns for thousands separator and decimal normalization.
-var (
-	digitCommaDigit = regexp.MustCompile(`(\d),(\d)`)
-	digitDotDigit   = regexp.MustCompile(`(\d)\.(\d)`)
-)
-
 // pointBetweenDigitsPattern matches the word "point" used as a decimal separator between digits.
-// Uses \s* (zero or more spaces) because the number word pattern may consume trailing whitespace,
-// leaving "point" adjacent to the preceding digit (e.g. "ten point two" → "10point 2").
 var pointBetweenDigitsPattern = regexp.MustCompile(`(\d)\s*point\s*(\d)`)
 
-func parseNumberPhrase(phrase string) (int, bool) {
-	words := strings.Fields(strings.ToLower(phrase))
+func isWordChar(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
+}
+
+func isAlpha(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+func isDigit(c byte) bool {
+	return c >= '0' && c <= '9'
+}
+
+// parseNumberWords converts a slice of number/scale words into an integer.
+// Words must already be lowercase. Returns false if the phrase is invalid.
+func parseNumberWords(words []string) (int, bool) {
 	if len(words) == 0 {
 		return 0, false
 	}
 
-	// Check for invalid "and" usage (connecting same-level numbers)
 	if !isValidAndUsage(words) {
 		return 0, false
 	}
@@ -148,10 +156,8 @@ func parseNumberPhrase(phrase string) (int, bool) {
 			}
 
 			if scale == 100 {
-				// hundred: multiply current by 100
 				current *= 100
 			} else if scale >= 1000 {
-				// For thousand, million, billion: add to result and reset current
 				result += current * scale
 				current = 0
 			}
@@ -169,17 +175,12 @@ func parseNumberPhrase(phrase string) (int, bool) {
 func isValidAndUsage(words []string) bool {
 	for i, word := range words {
 		if word == "and" {
-			// "and" must follow a scale word (hundred, thousand, etc.)
 			if i == 0 {
-				return false // "and" at beginning is invalid
+				return false
 			}
 
 			prevWord := words[i-1]
-			// Check if previous word is a scale word
 			if _, isScale := scaleWords[prevWord]; !isScale {
-				// If not a scale word, check if it's a number that could be part of a scale
-				// e.g., "twenty" in "one hundred twenty and five" is valid
-				// but "ten and fifteen" is not valid
 				return hasRecentScaleContext(words, i)
 			}
 		}
@@ -189,12 +190,10 @@ func isValidAndUsage(words []string) bool {
 
 // hasRecentScaleContext checks if there's a scale word in recent context
 func hasRecentScaleContext(words []string, andPos int) bool {
-	// Look backwards for a scale word
 	for i := andPos - 1; i >= 0; i-- {
 		if _, isScale := scaleWords[words[i]]; isScale {
 			return true
 		}
-		// If we hit another "and" or go too far back, no valid context
 		if words[i] == "and" || i < andPos-3 {
 			break
 		}
@@ -202,73 +201,126 @@ func hasRecentScaleContext(words []string, andPos int) bool {
 	return false
 }
 
-// isWordChar returns true for characters that constitute word boundaries in regex terms.
-func isWordChar(c byte) bool {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
-}
+// replaceAllVariables performs a single O(N) pass through the string, replacing variable
+// names (user-provided and built-in constants) and the '%' symbol with their values.
+// Uses a lazy builder: returns the original string with zero allocations if no replacements are made.
+func replaceAllVariables(input string, userVars map[string]float64) string {
+	// Build combined lookup map — user vars override built-in constants
+	var varMap map[string]string
+	if len(userVars) == 0 {
+		varMap = builtInConstantStrs
+	} else {
+		varMap = make(map[string]string, len(builtInConstantStrs)+len(userVars))
+		for name, val := range builtInConstantStrs {
+			varMap[name] = val
+		}
+		for name, val := range userVars {
+			varMap[strings.ToLower(name)] = strconv.FormatFloat(val, 'f', -1, 64)
+		}
+	}
 
-// replaceVariables replaces variable names in the input string with their numeric values.
-// Variables are sorted by length (descending) to ensure longer variable names are replaced first,
-// preventing partial replacements (e.g., "xx" should not become "valuex" when both "x" and "xx" exist).
-// Uses word boundaries to ensure variables match complete words only.
-func replaceVariables(input string, variables map[string]float64) string {
-	if len(variables) == 0 {
+	// Lazy builder: only allocate when a replacement is found
+	var b strings.Builder
+	lastWritten := 0
+	changed := false
+
+	i := 0
+	for i < len(input) {
+		c := input[i]
+
+		if c == '%' {
+			if !changed {
+				b.Grow(len(input) + 32)
+				changed = true
+			}
+			b.WriteString(input[lastWritten:i])
+			b.WriteString(" * 0.01 * ")
+			i++
+			lastWritten = i
+			continue
+		}
+
+		if isAlpha(c) || c == '_' {
+			// Extract word (consecutive word characters starting with alpha/_)
+			start := i
+			i++
+			for i < len(input) && isWordChar(input[i]) {
+				i++
+			}
+			word := input[start:i]
+			if replacement, ok := varMap[word]; ok {
+				if !changed {
+					b.Grow(len(input) + 32)
+					changed = true
+				}
+				b.WriteString(input[lastWritten:start])
+				b.WriteString(replacement)
+				lastWritten = i
+			}
+			continue
+		}
+
+		if isDigit(c) {
+			// Skip digit sequences (including "123abc" — all word chars)
+			i++
+			for i < len(input) && isWordChar(input[i]) {
+				i++
+			}
+			continue
+		}
+
+		i++
+	}
+
+	if !changed {
 		return input
 	}
+	b.WriteString(input[lastWritten:])
+	return b.String()
+}
 
-	// Sort variable names by length (descending) to replace longest first
-	varNames := make([]string, 0, len(variables))
-	for name := range variables {
-		varNames = append(varNames, name)
+// stripThousandsSep removes a thousands separator character that appears between digits.
+// Returns the original string with zero allocations if no separator is found.
+func stripThousandsSep(input string, sep byte) string {
+	if !strings.ContainsRune(input, rune(sep)) {
+		return input
 	}
-	sort.Slice(varNames, func(i, j int) bool {
-		return len(varNames[i]) > len(varNames[j])
-	})
-
-	result := input
-	for _, name := range varNames {
-		value := strconv.FormatFloat(variables[name], 'f', -1, 64)
-		nameLen := len(name)
-
-		var b strings.Builder
-		b.Grow(len(result))
-		i := 0
-		for {
-			idx := strings.Index(result[i:], name)
-			if idx == -1 {
-				b.WriteString(result[i:])
-				break
-			}
-			pos := i + idx
-			// Check word boundaries
-			startOk := pos == 0 || !isWordChar(result[pos-1])
-			endOk := pos+nameLen == len(result) || !isWordChar(result[pos+nameLen])
-			if startOk && endOk {
-				b.WriteString(result[i:pos])
-				b.WriteString(value)
-				i = pos + nameLen
-			} else {
-				b.WriteString(result[i : pos+1])
-				i = pos + 1
-			}
+	var b strings.Builder
+	b.Grow(len(input))
+	for i := 0; i < len(input); i++ {
+		if input[i] == sep && i > 0 && i < len(input)-1 && isDigit(input[i-1]) && isDigit(input[i+1]) {
+			continue
 		}
-		result = b.String()
+		b.WriteByte(input[i])
 	}
+	return b.String()
+}
 
-	return result
+// normalizeDecimalDelim replaces a non-dot decimal delimiter with '.' between digits.
+func normalizeDecimalDelim(input string, delim byte) string {
+	if !strings.ContainsRune(input, rune(delim)) {
+		return input
+	}
+	var b strings.Builder
+	b.Grow(len(input))
+	for i := 0; i < len(input); i++ {
+		if input[i] == delim && i > 0 && i < len(input)-1 && isDigit(input[i-1]) && isDigit(input[i+1]) {
+			b.WriteByte('.')
+			continue
+		}
+		b.WriteByte(input[i])
+	}
+	return b.String()
 }
 
 // replaceWords performs a single-pass scan over whitespace-delimited words, replacing
 // keywords with mathematical symbols and converting number words to digits.
-// It handles multi-word phrases (e.g., "raised to the power of"), single-word keywords
-// (e.g., "plus"), and compound number phrases (e.g., "one hundred and twenty").
 func replaceWords(words []string) string {
 	if len(words) == 0 {
 		return ""
 	}
 
 	var b strings.Builder
-	// Pre-allocate: most replacements are similar length to originals
 	b.Grow(len(words) * 6)
 
 	i := 0
@@ -316,7 +368,6 @@ func replaceWords(words []string) string {
 		_, isNum := numberWords[word]
 		_, isScale := scaleWords[word]
 		if isNum || isScale {
-			// Accumulate consecutive number/scale words and "and"
 			j := i + 1
 			for j < len(words) {
 				w := words[j]
@@ -331,8 +382,7 @@ func replaceWords(words []string) string {
 
 			// Try compound number parsing on the full accumulated phrase
 			if j > i+1 {
-				phrase := strings.Join(words[i:j], " ")
-				if num, ok := parseNumberPhrase(phrase); ok {
+				if num, ok := parseNumberWords(words[i:j]); ok {
 					b.WriteString(strconv.Itoa(num))
 					i = j
 					continue
@@ -340,7 +390,7 @@ func replaceWords(words []string) string {
 			}
 
 			// Single word or compound failed — convert just this word
-			if num, ok := parseNumberPhrase(word); ok {
+			if num, ok := parseNumberWords(words[i : i+1]); ok {
 				b.WriteString(strconv.Itoa(num))
 			} else {
 				b.WriteString(word)
@@ -358,17 +408,6 @@ func replaceWords(words []string) string {
 }
 
 // Normalize converts a raw input string into a normalized mathematical expression.
-// It transforms written numbers ("ten" → "10"), operation words ("plus" → "+", "power" → "^"),
-// percentage notations ("20% of" → "* 0.01 *"), and power shortcuts ("squared" → "^ 2") into symbolic form.
-// Variables from the optional map are replaced with their numeric values before other transformations.
-// Built-in constants (pi, e, tau, phi) are also available but have lower priority than user variables.
-//
-// The decimalDelimiter parameter specifies the decimal separator character used in the input.
-// Use '.' (or 0 for default) for standard notation (e.g. "3.14") or ',' for European notation (e.g. "3,14").
-// The alternate character is treated as a thousands separator and stripped (e.g. "1,000" → "1000" in default mode,
-// "1.000" → "1000" in comma mode). The word "point" is always recognized as a decimal separator.
-//
-// Returns a normalized string ready for cleaning and tokenization.
 func Normalize(input string, variables map[string]float64, decimalDelimiter rune) string {
 	if decimalDelimiter == 0 {
 		decimalDelimiter = '.'
@@ -376,34 +415,25 @@ func Normalize(input string, variables map[string]float64, decimalDelimiter rune
 
 	result := strings.ToLower(input)
 
-	// Strip thousands separators and normalize decimal delimiter using pre-compiled patterns.
+	// Strip thousands separators and normalize decimal delimiter.
 	if decimalDelimiter == '.' {
-		// Default: comma is thousands separator, dot is decimal (already correct)
-		result = digitCommaDigit.ReplaceAllString(result, "${1}${2}")
+		result = stripThousandsSep(result, ',')
 	} else {
-		// European: dot is thousands separator, comma is decimal
-		result = digitDotDigit.ReplaceAllString(result, "${1}${2}")
-		result = digitCommaDigit.ReplaceAllString(result, "${1}.${2}")
+		result = stripThousandsSep(result, '.')
+		result = normalizeDecimalDelim(result, byte(decimalDelimiter))
 	}
 
-	// Replace user variables first (highest priority), then built-in constants (lower priority)
-	// This ensures user-provided variables override built-in constants
-	result = replaceVariables(result, variables)
-	result = replaceVariables(result, builtInConstants)
+	// Single-pass: replace user variables, built-in constants, and '%' symbol.
+	result = replaceAllVariables(result, variables)
 
-	// Handle % symbol before word scan (not a word boundary, needs character-level replacement)
-	result = strings.ReplaceAll(result, "%", " * 0.01 * ")
-
-	// Single-pass word scan: replaces keywords and converts number words in one pass
+	// Single-pass word scan: replaces keywords and converts number words.
 	words := strings.Fields(result)
 	result = replaceWords(words)
 
-	// Convert "point" used as a decimal separator (e.g. "ten point two" → "10.2").
-	// This runs after number word conversion so digit context is established.
-	result = pointBetweenDigitsPattern.ReplaceAllString(result, "${1}.${2}")
+	// Convert "point" as decimal separator (e.g. "10 point 2" → "10.2").
+	if strings.Contains(result, "point") {
+		result = pointBetweenDigitsPattern.ReplaceAllString(result, "${1}.${2}")
+	}
 
-	result = whitespaceRegex.ReplaceAllString(result, " ")
-	result = strings.TrimSpace(result)
-
-	return result
+	return strings.TrimSpace(result)
 }

@@ -69,11 +69,11 @@ func evaluateExpression(tokens []tokenizer.Token) (float64, error) {
 	return evaluateSimpleExpression(expression)
 }
 
-// makeNumberToken creates a NUMBER token with both string and float64 representations.
+// makeNumberToken creates a NUMBER token with a pre-computed float64 value.
+// Value is left empty since the evaluator only uses NumValue for intermediate results.
 func makeNumberToken(value float64) tokenizer.Token {
 	return tokenizer.Token{
 		Type:     tokenizer.NUMBER,
-		Value:    strconv.FormatFloat(value, 'f', -1, 64),
 		NumValue: value,
 	}
 }

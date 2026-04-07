@@ -1,6 +1,9 @@
 package normalizer
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseNumberPhrase(t *testing.T) {
 	tests := []struct {
@@ -108,7 +111,7 @@ func TestParseNumberPhrase(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, valid := parseNumberPhrase(tt.input)
+			result, valid := parseNumberWords(strings.Fields(strings.ToLower(tt.input)))
 			if valid != tt.valid {
 				t.Errorf("Expected valid=%v, got valid=%v", tt.valid, valid)
 			}
