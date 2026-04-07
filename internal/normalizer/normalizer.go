@@ -201,25 +201,79 @@ func hasRecentScaleContext(words []string, andPos int) bool {
 	return false
 }
 
-// replaceAllVariables performs a single O(N) pass through the string, replacing variable
-// names (user-provided and built-in constants) and the '%' symbol with their values.
-// Uses a lazy builder: returns the original string with zero allocations if no replacements are made.
-func replaceAllVariables(input string, userVars map[string]float64) string {
-	// Build combined lookup map — user vars override built-in constants
-	var varMap map[string]string
-	if len(userVars) == 0 {
-		varMap = builtInConstantStrs
-	} else {
-		varMap = make(map[string]string, len(builtInConstantStrs)+len(userVars))
-		for name, val := range builtInConstantStrs {
-			varMap[name] = val
-		}
-		for name, val := range userVars {
-			varMap[strings.ToLower(name)] = strconv.FormatFloat(val, 'f', -1, 64)
+// replaceUserVariables replaces user-provided variable names in the input string.
+// Uses strings.Index for matching, which correctly handles multi-word variable names
+// like "my var" and names adjacent to operators like "x+5".
+// Variables are sorted by length (descending) to replace longest first.
+func replaceUserVariables(input string, variables map[string]float64) string {
+	if len(variables) == 0 {
+		return input
+	}
+
+	// Build sorted name list and value map
+	type varEntry struct {
+		name  string
+		value string
+	}
+	entries := make([]varEntry, 0, len(variables))
+	for name, val := range variables {
+		entries = append(entries, varEntry{
+			name:  strings.ToLower(name),
+			value: strconv.FormatFloat(val, 'f', -1, 64),
+		})
+	}
+	// Sort by name length descending — longest match first
+	for i := 1; i < len(entries); i++ {
+		for j := i; j > 0 && len(entries[j].name) > len(entries[j-1].name); j-- {
+			entries[j], entries[j-1] = entries[j-1], entries[j]
 		}
 	}
 
-	// Lazy builder: only allocate when a replacement is found
+	result := input
+	for _, e := range entries {
+		nameLen := len(e.name)
+
+		// Lazy builder per variable
+		var b strings.Builder
+		changed := false
+		lastWritten := 0
+
+		i := 0
+		for {
+			idx := strings.Index(result[i:], e.name)
+			if idx == -1 {
+				break
+			}
+			pos := i + idx
+			startOk := pos == 0 || !isWordChar(result[pos-1])
+			endOk := pos+nameLen == len(result) || !isWordChar(result[pos+nameLen])
+			if startOk && endOk {
+				if !changed {
+					b.Grow(len(result))
+					changed = true
+				}
+				b.WriteString(result[lastWritten:pos])
+				b.WriteString(e.value)
+				lastWritten = pos + nameLen
+				i = pos + nameLen
+			} else {
+				i = pos + 1
+			}
+		}
+
+		if changed {
+			b.WriteString(result[lastWritten:])
+			result = b.String()
+		}
+	}
+
+	return result
+}
+
+// replaceBuiltInsAndPercent performs a single O(N) pass through the string, replacing
+// built-in constant names (pi, e, tau, phi) and the '%' symbol.
+// Uses a lazy builder: returns the original string with zero allocations if nothing matches.
+func replaceBuiltInsAndPercent(input string) string {
 	var b strings.Builder
 	lastWritten := 0
 	changed := false
@@ -241,14 +295,13 @@ func replaceAllVariables(input string, userVars map[string]float64) string {
 		}
 
 		if isAlpha(c) || c == '_' {
-			// Extract word (consecutive word characters starting with alpha/_)
 			start := i
 			i++
 			for i < len(input) && isWordChar(input[i]) {
 				i++
 			}
 			word := input[start:i]
-			if replacement, ok := varMap[word]; ok {
+			if replacement, ok := builtInConstantStrs[word]; ok {
 				if !changed {
 					b.Grow(len(input) + 32)
 					changed = true
@@ -261,7 +314,6 @@ func replaceAllVariables(input string, userVars map[string]float64) string {
 		}
 
 		if isDigit(c) {
-			// Skip digit sequences (including "123abc" — all word chars)
 			i++
 			for i < len(input) && isWordChar(input[i]) {
 				i++
@@ -423,8 +475,10 @@ func Normalize(input string, variables map[string]float64, decimalDelimiter rune
 		result = normalizeDecimalDelim(result, byte(decimalDelimiter))
 	}
 
-	// Single-pass: replace user variables, built-in constants, and '%' symbol.
-	result = replaceAllVariables(result, variables)
+	// Replace user variables first (highest priority, supports multi-word names),
+	// then built-in constants and '%' symbol in a single pass.
+	result = replaceUserVariables(result, variables)
+	result = replaceBuiltInsAndPercent(result)
 
 	// Single-pass word scan: replaces keywords and converts number words.
 	words := strings.Fields(result)

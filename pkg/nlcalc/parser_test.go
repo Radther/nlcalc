@@ -91,6 +91,18 @@ func TestParseWithVariables(t *testing.T) {
 			expected:  125.0,
 		},
 		{
+			name:      "multi_word_variable",
+			input:     "my one plus one",
+			variables: map[string]float64{"my one": 3},
+			expected:  4.0,
+		},
+		{
+			name:      "multi_word_variable_with_number_word",
+			input:     "base cost times two",
+			variables: map[string]float64{"base cost": 50},
+			expected:  100.0,
+		},
+		{
 			name:      "complex_expression_with_variables",
 			input:     "quantity times price plus shipping",
 			variables: map[string]float64{"quantity": 3, "price": 25.5, "shipping": 10},
