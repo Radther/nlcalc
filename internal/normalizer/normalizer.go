@@ -57,79 +57,71 @@ var builtInConstants = map[string]float64{
 	"phi": 1.618033988749895, // Golden ratio
 }
 
-// buildNumberWordsPattern creates a regex pattern from map keys
-func buildNumberWordsPattern(words map[string]int) string {
-	keys := make([]string, 0, len(words))
-	for word := range words {
-		keys = append(keys, word)
-	}
-	sort.Strings(keys) // Sort for deterministic pattern
-	return `\b(?:` + strings.Join(keys, "|") + `)\b`
+// phraseReplacement represents a multi-word phrase and its replacement.
+// The words field contains the remaining words after the first (the map key).
+type phraseReplacement struct {
+	words       []string
+	replacement string
 }
 
-// buildCompoundNumberPattern creates a regex pattern for compound numbers
-func buildCompoundNumberPattern() string {
-	allWords := make([]string, 0, len(numberWords)+len(scaleWords)+1)
-	for word := range numberWords {
-		allWords = append(allWords, word)
-	}
-	for word := range scaleWords {
-		allWords = append(allWords, word)
-	}
-	allWords = append(allWords, "and")
-	sort.Strings(allWords) // Sort for deterministic pattern
-	return `\b(?:(?:` + strings.Join(allWords, "|") + `)\s*)+\b`
+// multiWordPhrases maps the first word of a phrase to its possible completions.
+// Entries with more words are listed first for greedy (longest) matching.
+var multiWordPhrases = map[string][]phraseReplacement{
+	"raised": {
+		{words: []string{"to", "the", "power", "of"}, replacement: " ^ "},
+	},
+	"natural": {
+		{words: []string{"logarithm"}, replacement: "ln "},
+	},
+	"square": {
+		{words: []string{"root"}, replacement: "sqrt "},
+	},
+	"divided": {
+		{words: []string{"by"}, replacement: " / "},
+	},
+	"added": {
+		{words: []string{"to"}, replacement: " + "},
+	},
 }
 
-// Compile regex patterns once at package level - built from maps for single source of truth
-var individualWordPattern = regexp.MustCompile(buildNumberWordsPattern(numberWords))
-
-// Pre-compiled regexes for percentage operations
-var (
-	percentageRegex = regexp.MustCompile(`\bpercentage\b`)
-	percentRegex    = regexp.MustCompile(`\bpercent\b`)
-	percentSymbol   = regexp.MustCompile(`%`)
-)
-
-// Pre-compiled regexes for power operations
-var (
-	raisedToThePowerOfRegex = regexp.MustCompile(`\braised to the power of\b`)
-	squaredRegex            = regexp.MustCompile(`\bsquared\b`)
-	cubedRegex              = regexp.MustCompile(`\bcubed\b`)
-	raisedRegex             = regexp.MustCompile(`\braised\b`)
-	powerRegex              = regexp.MustCompile(`\bpower\b`)
-)
-
-// Pre-compiled regexes for function operations
-var (
-	naturalLogarithmRegex = regexp.MustCompile(`\bnatural logarithm\b`)
-	squareRootRegex       = regexp.MustCompile(`\bsquare root\b`)
-	squarerootRegex       = regexp.MustCompile(`\bsquareroot\b`)
-	absoluteRegex         = regexp.MustCompile(`\babsolute\b`)
-	logarithmRegex        = regexp.MustCompile(`\blogarithm\b`)
-	sineRegex             = regexp.MustCompile(`\bsine\b`)
-	cosineRegex           = regexp.MustCompile(`\bcosine\b`)
-	tangentRegex          = regexp.MustCompile(`\btangent\b`)
-)
-
-// Pre-compiled regexes for basic operations
-var (
-	plusRegex      = regexp.MustCompile(`\bplus\b`)
-	addRegex       = regexp.MustCompile(`\badd\b`)
-	addedToRegex   = regexp.MustCompile(`\badded to\b`)
-	minusRegex     = regexp.MustCompile(`\bminus\b`)
-	subtractRegex  = regexp.MustCompile(`\bsubtract\b`)
-	timesRegex     = regexp.MustCompile(`\btimes\b`)
-	multiplyRegex  = regexp.MustCompile(`\bmultiply\b`)
-	dividedByRegex = regexp.MustCompile(`\bdivided by\b`)
-	divideRegex    = regexp.MustCompile(`\bdivide\b`)
-)
+// wordReplacements maps single keywords to their mathematical symbol replacements.
+var wordReplacements = map[string]string{
+	"percentage": " * 0.01 * ",
+	"percent":    " * 0.01 * ",
+	"squareroot": "sqrt ",
+	"squared":    " ^ 2",
+	"cubed":      " ^ 3",
+	"raised":     " ^ ",
+	"power":      " ^ ",
+	"absolute":   "abs ",
+	"logarithm":  "log ",
+	"sine":       "sin ",
+	"cosine":     "cos ",
+	"tangent":    "tan ",
+	"plus":       " + ",
+	"add":        " + ",
+	"minus":      " - ",
+	"subtract":   " - ",
+	"times":      " * ",
+	"multiply":   " * ",
+	"divide":     " / ",
+}
 
 // Pre-compiled utility regexes
 var (
 	whitespaceRegex = regexp.MustCompile(`\s+`)
-	numberPattern   = regexp.MustCompile(buildCompoundNumberPattern())
 )
+
+// Pre-compiled delimiter patterns for thousands separator and decimal normalization.
+var (
+	digitCommaDigit = regexp.MustCompile(`(\d),(\d)`)
+	digitDotDigit   = regexp.MustCompile(`(\d)\.(\d)`)
+)
+
+// pointBetweenDigitsPattern matches the word "point" used as a decimal separator between digits.
+// Uses \s* (zero or more spaces) because the number word pattern may consume trailing whitespace,
+// leaving "point" adjacent to the preceding digit (e.g. "ten point two" → "10point 2").
+var pointBetweenDigitsPattern = regexp.MustCompile(`(\d)\s*point\s*(\d)`)
 
 func parseNumberPhrase(phrase string) (int, bool) {
 	words := strings.Fields(strings.ToLower(phrase))
@@ -210,6 +202,11 @@ func hasRecentScaleContext(words []string, andPos int) bool {
 	return false
 }
 
+// isWordChar returns true for characters that constitute word boundaries in regex terms.
+func isWordChar(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
+}
+
 // replaceVariables replaces variable names in the input string with their numeric values.
 // Variables are sorted by length (descending) to ensure longer variable names are replaced first,
 // preventing partial replacements (e.g., "xx" should not become "valuex" when both "x" and "xx" exist).
@@ -230,19 +227,135 @@ func replaceVariables(input string, variables map[string]float64) string {
 
 	result := input
 	for _, name := range varNames {
-		value := variables[name]
-		// Use word boundaries to match complete variable names only
-		pattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(name) + `\b`)
-		result = pattern.ReplaceAllString(result, strconv.FormatFloat(value, 'f', -1, 64))
+		value := strconv.FormatFloat(variables[name], 'f', -1, 64)
+		nameLen := len(name)
+
+		var b strings.Builder
+		b.Grow(len(result))
+		i := 0
+		for {
+			idx := strings.Index(result[i:], name)
+			if idx == -1 {
+				b.WriteString(result[i:])
+				break
+			}
+			pos := i + idx
+			// Check word boundaries
+			startOk := pos == 0 || !isWordChar(result[pos-1])
+			endOk := pos+nameLen == len(result) || !isWordChar(result[pos+nameLen])
+			if startOk && endOk {
+				b.WriteString(result[i:pos])
+				b.WriteString(value)
+				i = pos + nameLen
+			} else {
+				b.WriteString(result[i : pos+1])
+				i = pos + 1
+			}
+		}
+		result = b.String()
 	}
 
 	return result
 }
 
-// pointBetweenDigitsPattern matches the word "point" used as a decimal separator between digits.
-// Uses \s* (zero or more spaces) because the number word pattern may consume trailing whitespace,
-// leaving "point" adjacent to the preceding digit (e.g. "ten point two" → "10point 2").
-var pointBetweenDigitsPattern = regexp.MustCompile(`(\d)\s*point\s*(\d)`)
+// replaceWords performs a single-pass scan over whitespace-delimited words, replacing
+// keywords with mathematical symbols and converting number words to digits.
+// It handles multi-word phrases (e.g., "raised to the power of"), single-word keywords
+// (e.g., "plus"), and compound number phrases (e.g., "one hundred and twenty").
+func replaceWords(words []string) string {
+	if len(words) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	// Pre-allocate: most replacements are similar length to originals
+	b.Grow(len(words) * 6)
+
+	i := 0
+	for i < len(words) {
+		if i > 0 {
+			b.WriteByte(' ')
+		}
+
+		word := words[i]
+
+		// 1. Try multi-word phrase match (longest first)
+		if phrases, ok := multiWordPhrases[word]; ok {
+			matched := false
+			for _, phrase := range phrases {
+				phraseLen := len(phrase.words)
+				if i+1+phraseLen <= len(words) {
+					match := true
+					for j, pw := range phrase.words {
+						if words[i+1+j] != pw {
+							match = false
+							break
+						}
+					}
+					if match {
+						b.WriteString(phrase.replacement)
+						i += 1 + phraseLen
+						matched = true
+						break
+					}
+				}
+			}
+			if matched {
+				continue
+			}
+		}
+
+		// 2. Single-word keyword replacement
+		if replacement, ok := wordReplacements[word]; ok {
+			b.WriteString(replacement)
+			i++
+			continue
+		}
+
+		// 3. Number word accumulation and compound number parsing
+		_, isNum := numberWords[word]
+		_, isScale := scaleWords[word]
+		if isNum || isScale {
+			// Accumulate consecutive number/scale words and "and"
+			j := i + 1
+			for j < len(words) {
+				w := words[j]
+				_, wIsNum := numberWords[w]
+				_, wIsScale := scaleWords[w]
+				if wIsNum || wIsScale || w == "and" {
+					j++
+				} else {
+					break
+				}
+			}
+
+			// Try compound number parsing on the full accumulated phrase
+			if j > i+1 {
+				phrase := strings.Join(words[i:j], " ")
+				if num, ok := parseNumberPhrase(phrase); ok {
+					b.WriteString(strconv.Itoa(num))
+					i = j
+					continue
+				}
+			}
+
+			// Single word or compound failed — convert just this word
+			if num, ok := parseNumberPhrase(word); ok {
+				b.WriteString(strconv.Itoa(num))
+			} else {
+				b.WriteString(word)
+			}
+			i++
+			continue
+		}
+
+		// 4. Pass through unchanged
+		b.WriteString(word)
+		i++
+	}
+
+	return b.String()
+}
 
 // Normalize converts a raw input string into a normalized mathematical expression.
 // It transforms written numbers ("ten" → "10"), operation words ("plus" → "+", "power" → "^"),
@@ -263,24 +376,14 @@ func Normalize(input string, variables map[string]float64, decimalDelimiter rune
 
 	result := strings.ToLower(input)
 
-	// Determine the thousands separator (whichever character is NOT the decimal delimiter).
-	var thousandsSep rune
+	// Strip thousands separators and normalize decimal delimiter using pre-compiled patterns.
 	if decimalDelimiter == '.' {
-		thousandsSep = ','
+		// Default: comma is thousands separator, dot is decimal (already correct)
+		result = digitCommaDigit.ReplaceAllString(result, "${1}${2}")
 	} else {
-		thousandsSep = '.'
-	}
-
-	// Strip thousands separators (the alternate character when it appears between digits).
-	thousandsSepStr := regexp.QuoteMeta(string(thousandsSep))
-	thousandsPattern := regexp.MustCompile(`(\d)` + thousandsSepStr + `(\d)`)
-	result = thousandsPattern.ReplaceAllString(result, "${1}${2}")
-
-	// Normalize the decimal delimiter to '.' for standard downstream processing.
-	if decimalDelimiter != '.' {
-		delimStr := regexp.QuoteMeta(string(decimalDelimiter))
-		decimalPattern := regexp.MustCompile(`(\d)` + delimStr + `(\d)`)
-		result = decimalPattern.ReplaceAllString(result, "${1}.${2}")
+		// European: dot is thousands separator, comma is decimal
+		result = digitDotDigit.ReplaceAllString(result, "${1}${2}")
+		result = digitCommaDigit.ReplaceAllString(result, "${1}.${2}")
 	}
 
 	// Replace user variables first (highest priority), then built-in constants (lower priority)
@@ -288,57 +391,12 @@ func Normalize(input string, variables map[string]float64, decimalDelimiter rune
 	result = replaceVariables(result, variables)
 	result = replaceVariables(result, builtInConstants)
 
-	// Handle percentage operations - order matters (longer phrases first)
-	result = percentageRegex.ReplaceAllString(result, " * 0.01 * ")
-	result = percentRegex.ReplaceAllString(result, " * 0.01 * ")
-	result = percentSymbol.ReplaceAllString(result, " * 0.01 * ")
+	// Handle % symbol before word scan (not a word boundary, needs character-level replacement)
+	result = strings.ReplaceAll(result, "%", " * 0.01 * ")
 
-	// Handle power operations - order matters to prevent double replacement
-	result = raisedToThePowerOfRegex.ReplaceAllString(result, " ^ ") // Must be first to prevent double ^
-	result = squaredRegex.ReplaceAllString(result, " ^ 2")            // Shortcut for ^2
-	result = cubedRegex.ReplaceAllString(result, " ^ 3")              // Shortcut for ^3
-	result = raisedRegex.ReplaceAllString(result, " ^ ")              // General "raised to"
-	result = powerRegex.ReplaceAllString(result, " ^ ")               // General "power"
-
-	// Handle function phrases - convert natural language to function names
-	// Order matters: longer phrases must be matched before shorter ones
-	result = naturalLogarithmRegex.ReplaceAllString(result, "ln ")  // Must be before "logarithm"
-	result = squareRootRegex.ReplaceAllString(result, "sqrt ")
-	result = squarerootRegex.ReplaceAllString(result, "sqrt ")
-	result = absoluteRegex.ReplaceAllString(result, "abs ")
-	result = logarithmRegex.ReplaceAllString(result, "log ")
-	result = sineRegex.ReplaceAllString(result, "sin ")
-	result = cosineRegex.ReplaceAllString(result, "cos ")
-	result = tangentRegex.ReplaceAllString(result, "tan ")
-
-	// Handle basic arithmetic operations
-	result = addedToRegex.ReplaceAllString(result, " + ")   // Must be before "add"
-	result = dividedByRegex.ReplaceAllString(result, " / ") // Must be before "divide"
-	result = plusRegex.ReplaceAllString(result, " + ")
-	result = addRegex.ReplaceAllString(result, " + ")
-	result = minusRegex.ReplaceAllString(result, " - ")
-	result = subtractRegex.ReplaceAllString(result, " - ")
-	result = timesRegex.ReplaceAllString(result, " * ")
-	result = multiplyRegex.ReplaceAllString(result, " * ")
-	result = divideRegex.ReplaceAllString(result, " / ")
-
-	// Single number pattern - handles both compound and individual numbers
-	result = numberPattern.ReplaceAllStringFunc(result, func(match string) string {
-		// Try compound number parsing first (handles complex cases and validation)
-		if num, ok := parseNumberPhrase(match); ok {
-			return strconv.Itoa(num)
-		}
-
-		// If compound parsing fails, convert individual words within the match
-		// This handles cases like "five and ten" where compound parsing fails due to invalid "and"
-		// but individual words should still be converted to "5 and 10"
-		return individualWordPattern.ReplaceAllStringFunc(match, func(word string) string {
-			if val, exists := numberWords[word]; exists {
-				return strconv.Itoa(val)
-			}
-			return word
-		})
-	})
+	// Single-pass word scan: replaces keywords and converts number words in one pass
+	words := strings.Fields(result)
+	result = replaceWords(words)
 
 	// Convert "point" used as a decimal separator (e.g. "ten point two" → "10.2").
 	// This runs after number word conversion so digit context is established.

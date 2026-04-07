@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/radther/nlcalc/internal/cleaner"
 	"github.com/radther/nlcalc/internal/evaluator"
 	"github.com/radther/nlcalc/internal/normalizer"
 	"github.com/radther/nlcalc/internal/tokenizer"
@@ -47,13 +46,17 @@ func main() {
 	}
 
 	normalized := normalizer.Normalize(input, nil, decimalDelimiter)
-	cleaned := cleaner.Clean(normalized)
-	tokens, err := tokenizer.Tokenize(cleaned)
+	tokens, err := tokenizer.Tokenize(normalized)
 
 	if *verbose {
 		fmt.Printf("Original: %s\n", input)
 		fmt.Printf("Normalized: %s\n", normalized)
-		fmt.Printf("Cleaned: %s\n", cleaned)
+		// Reconstruct cleaned view from tokens
+		tokenValues := make([]string, len(tokens))
+		for i, token := range tokens {
+			tokenValues[i] = token.Value
+		}
+		fmt.Printf("Cleaned: %s\n", strings.Join(tokenValues, " "))
 	}
 
 	if err != nil {

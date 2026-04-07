@@ -27,7 +27,7 @@ func Evaluate(tokens []tokenizer.Token) (float64, error) {
 
 	if len(tokens) == 1 {
 		if tokens[0].Type == tokenizer.NUMBER {
-			return strconv.ParseFloat(tokens[0].Value, 64)
+			return numVal(tokens[0]), nil
 		}
 		return 0.0, errors.New("invalid single token expression")
 	}
@@ -57,10 +57,7 @@ func evaluateExpression(tokens []tokenizer.Token) (float64, error) {
 			return 0.0, err
 		}
 
-		resultToken := tokenizer.Token{
-			Type:  tokenizer.NUMBER,
-			Value: strconv.FormatFloat(result, 'f', -1, 64),
-		}
+		resultToken := makeNumberToken(result)
 
 		newExpression := make([]tokenizer.Token, 0, len(expression)-(end-start)+1)
 		newExpression = append(newExpression, expression[:start]...)
@@ -70,6 +67,26 @@ func evaluateExpression(tokens []tokenizer.Token) (float64, error) {
 	}
 
 	return evaluateSimpleExpression(expression)
+}
+
+// makeNumberToken creates a NUMBER token with both string and float64 representations.
+func makeNumberToken(value float64) tokenizer.Token {
+	return tokenizer.Token{
+		Type:     tokenizer.NUMBER,
+		Value:    strconv.FormatFloat(value, 'f', -1, 64),
+		NumValue: value,
+	}
+}
+
+// numVal extracts the float64 value from a NUMBER token. It uses the pre-parsed
+// NumValue when available, falling back to parsing the Value string for tokens
+// not created by the tokenizer (e.g., test fixtures).
+func numVal(t tokenizer.Token) float64 {
+	if t.NumValue != 0 {
+		return t.NumValue
+	}
+	v, _ := strconv.ParseFloat(t.Value, 64)
+	return v
 }
 
 // processUnaryOperators handles unary operators (+ and -) by applying them to numbers.
@@ -88,29 +105,17 @@ func processUnaryOperators(tokens []tokenizer.Token) []tokenizer.Token {
 		for i := 0; i < len(result); i++ {
 			// Check for unary operator followed by a number
 			if result[i].Type == tokenizer.UNARY_OPERATOR &&
-			   i+1 < len(result) &&
-			   result[i+1].Type == tokenizer.NUMBER {
+				i+1 < len(result) &&
+				result[i+1].Type == tokenizer.NUMBER {
 
-				// Parse the number and apply the unary operator
-				value, err := strconv.ParseFloat(result[i+1].Value, 64)
-				if err == nil {
-					var newValue float64
-					if result[i].Value == "-" {
-						newValue = -value // Negate
-					} else {
-						newValue = value // Identity (unary +)
-					}
-
-					newResult = append(newResult, tokenizer.Token{
-						Type:  tokenizer.NUMBER,
-						Value: strconv.FormatFloat(newValue, 'f', -1, 64),
-					})
-					i++ // Skip the number token since we've processed it
-					changed = true
-				} else {
-					// If parsing fails, keep original tokens
-					newResult = append(newResult, result[i])
+				newValue := numVal(result[i+1])
+				if result[i].Value == "-" {
+					newValue = -newValue
 				}
+
+				newResult = append(newResult, makeNumberToken(newValue))
+				i++ // Skip the number token since we've processed it
+				changed = true
 			} else {
 				newResult = append(newResult, result[i])
 			}
@@ -132,7 +137,7 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 
 	if len(tokens) == 1 {
 		if tokens[0].Type == tokenizer.NUMBER {
-			return strconv.ParseFloat(tokens[0].Value, 64)
+			return numVal(tokens[0]), nil
 		}
 		return 0.0, errors.New("invalid single token")
 	}
@@ -168,10 +173,7 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 				return 0.0, errors.New("function argument must be a number")
 			}
 
-			arg, err := strconv.ParseFloat(expression[funcIndex+1].Value, 64)
-			if err != nil {
-				return 0.0, errors.New("invalid function argument")
-			}
+			arg := numVal(expression[funcIndex+1])
 
 			result, err := applyFunction(expression[funcIndex].Value, arg)
 			if err != nil {
@@ -179,10 +181,7 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 			}
 
 			// Replace [FUNCTION, NUMBER] with result NUMBER
-			resultToken := tokenizer.Token{
-				Type:  tokenizer.NUMBER,
-				Value: strconv.FormatFloat(result, 'f', -1, 64),
-			}
+			resultToken := makeNumberToken(result)
 
 			newExpression := make([]tokenizer.Token, 0, len(expression)-1)
 			newExpression = append(newExpression, expression[:funcIndex]...)
@@ -207,15 +206,15 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 			return 0.0, errors.New("invalid operator position")
 		}
 
-		left, err := strconv.ParseFloat(expression[opIndex-1].Value, 64)
-		if err != nil {
+		if expression[opIndex-1].Type != tokenizer.NUMBER {
 			return 0.0, errors.New("invalid left operand")
 		}
-
-		right, err := strconv.ParseFloat(expression[opIndex+1].Value, 64)
-		if err != nil {
+		if expression[opIndex+1].Type != tokenizer.NUMBER {
 			return 0.0, errors.New("invalid right operand")
 		}
+
+		left := numVal(expression[opIndex-1])
+		right := numVal(expression[opIndex+1])
 
 		var result float64
 		switch expression[opIndex].Value {
@@ -236,10 +235,7 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 			return 0.0, errors.New("unknown operator")
 		}
 
-		resultToken := tokenizer.Token{
-			Type:  tokenizer.NUMBER,
-			Value: strconv.FormatFloat(result, 'f', -1, 64),
-		}
+		resultToken := makeNumberToken(result)
 
 		newExpression := make([]tokenizer.Token, 0, len(expression)-2)
 		newExpression = append(newExpression, expression[:opIndex-1]...)
@@ -252,7 +248,7 @@ func evaluateSimpleExpression(tokens []tokenizer.Token) (float64, error) {
 		return 0.0, errors.New("invalid expression structure")
 	}
 
-	return strconv.ParseFloat(expression[0].Value, 64)
+	return numVal(expression[0]), nil
 }
 
 func findInnerParentheses(tokens []tokenizer.Token) int {
