@@ -33,7 +33,6 @@
 package nlcalc
 
 import (
-	"github.com/radther/nlcalc/internal/cleaner"
 	"github.com/radther/nlcalc/internal/evaluator"
 	"github.com/radther/nlcalc/internal/normalizer"
 	"github.com/radther/nlcalc/internal/tokenizer"
@@ -55,8 +54,7 @@ type Options struct {
 // See Parse for a full description of supported expression formats.
 func ParseWithOptions(input string, variables map[string]float64, options Options) (float64, error) {
 	normalized := normalizer.Normalize(input, variables, options.DecimalDelimiter)
-	cleaned := cleaner.Clean(normalized)
-	tokens, err := tokenizer.Tokenize(cleaned)
+	tokens, err := tokenizer.Tokenize(normalized)
 	if err != nil {
 		return 0, err
 	}

@@ -3,7 +3,6 @@ package tokenizer
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -26,21 +25,17 @@ const (
 
 // Token represents a single parsed element of a mathematical expression.
 type Token struct {
-	Type  TokenType // The category of the token
-	Value string    // The string value of the token
+	Type     TokenType // The category of the token
+	Value    string    // The string value of the token
+	NumValue float64   // Pre-parsed numeric value for NUMBER tokens
 }
 
 func (t Token) String() string {
 	return fmt.Sprintf("%s(%s)", t.Type, t.Value)
 }
 
-var (
-	numberPattern      = regexp.MustCompile(`\d+\.?\d*`)
-	operatorPattern    = regexp.MustCompile(`[+\-*/^]`)
-	parenthesisPattern = regexp.MustCompile(`[()]`)
-	whitespacePattern  = regexp.MustCompile(`\s+`)
-	functionPattern    = regexp.MustCompile(`^(sqrt|abs|log|ln|sin|cos|tan)`)
-)
+// Known function names for matching in the tokenizer.
+var functionNames = []string{"sqrt", "abs", "log", "ln", "sin", "cos", "tan"}
 
 // isUnaryContext determines if the current position represents a unary operator context.
 // An operator (+/-) is unary rather than binary when it appears:
@@ -55,9 +50,25 @@ func isUnaryContext(tokens []Token) bool {
 
 	lastToken := tokens[len(tokens)-1]
 	return lastToken.Type == OPERATOR ||
-	       lastToken.Type == UNARY_OPERATOR ||
-	       lastToken.Type == FUNCTION ||
-	       (lastToken.Type == PARENTHESIS && lastToken.Value == "(")
+		lastToken.Type == UNARY_OPERATOR ||
+		lastToken.Type == FUNCTION ||
+		(lastToken.Type == PARENTHESIS && lastToken.Value == "(")
+}
+
+func isDigit(c byte) bool {
+	return c >= '0' && c <= '9'
+}
+
+func isAlpha(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+func isWhitespace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r'
+}
+
+func isOperator(c byte) bool {
+	return c == '+' || c == '-' || c == '*' || c == '/' || c == '^'
 }
 
 // Tokenize parses a cleaned mathematical expression string into a slice of tokens.
@@ -71,48 +82,84 @@ func Tokenize(input string) ([]Token, error) {
 	}
 
 	input = strings.TrimSpace(input)
-	tokens := []Token{}
+	tokens := make([]Token, 0, 8) // Pre-allocate for typical expression size
 	i := 0
 
 	for i < len(input) {
-		if whitespacePattern.MatchString(string(input[i])) {
+		c := input[i]
+
+		if isWhitespace(c) {
 			i++
 			continue
 		}
 
-		if funcMatch := functionPattern.FindString(input[i:]); funcMatch != "" {
-			tokens = append(tokens, Token{Type: FUNCTION, Value: funcMatch})
-			i += len(funcMatch)
-			continue
-		}
-
-		if numberMatch := numberPattern.FindString(input[i:]); numberMatch != "" && strings.HasPrefix(input[i:], numberMatch) {
-			if _, err := strconv.ParseFloat(numberMatch, 64); err != nil {
-				return nil, fmt.Errorf("invalid number: %s", numberMatch)
+		// Try function names
+		if isAlpha(c) {
+			matched := false
+			for _, fn := range functionNames {
+				if i+len(fn) <= len(input) && input[i:i+len(fn)] == fn {
+					// Ensure the function name isn't a prefix of a longer identifier
+					if i+len(fn) == len(input) || !isAlpha(input[i+len(fn)]) {
+						tokens = append(tokens, Token{Type: FUNCTION, Value: fn})
+						i += len(fn)
+						matched = true
+						break
+					}
+				}
 			}
-			tokens = append(tokens, Token{Type: NUMBER, Value: numberMatch})
-			i += len(numberMatch)
+			if matched {
+				continue
+			}
+			// Skip unrecognized word (filler words like "the", "of", "what", etc.)
+			for i < len(input) && isAlpha(input[i]) {
+				i++
+			}
 			continue
 		}
 
-		if operatorMatch := operatorPattern.FindString(input[i:]); operatorMatch != "" && strings.HasPrefix(input[i:], operatorMatch) {
-			// Check if +/- is unary or binary based on context
-			if (operatorMatch == "-" || operatorMatch == "+") && isUnaryContext(tokens) {
-				tokens = append(tokens, Token{Type: UNARY_OPERATOR, Value: operatorMatch})
+		// Numbers: digit or dot followed by digit
+		if isDigit(c) {
+			start := i
+			for i < len(input) && isDigit(input[i]) {
+				i++
+			}
+			// Optional decimal part
+			if i < len(input) && input[i] == '.' {
+				i++
+				for i < len(input) && isDigit(input[i]) {
+					i++
+				}
+			}
+			numStr := input[start:i]
+			numVal, err := strconv.ParseFloat(numStr, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid number: %s", numStr)
+			}
+			tokens = append(tokens, Token{Type: NUMBER, Value: numStr, NumValue: numVal})
+			continue
+		}
+
+		// Operators
+		if isOperator(c) {
+			op := input[i : i+1]
+			if (c == '-' || c == '+') && isUnaryContext(tokens) {
+				tokens = append(tokens, Token{Type: UNARY_OPERATOR, Value: op})
 			} else {
-				tokens = append(tokens, Token{Type: OPERATOR, Value: operatorMatch})
+				tokens = append(tokens, Token{Type: OPERATOR, Value: op})
 			}
-			i += len(operatorMatch)
+			i++
 			continue
 		}
 
-		if parenthesisMatch := parenthesisPattern.FindString(input[i:]); parenthesisMatch != "" && strings.HasPrefix(input[i:], parenthesisMatch) {
-			tokens = append(tokens, Token{Type: PARENTHESIS, Value: parenthesisMatch})
-			i += len(parenthesisMatch)
+		// Parentheses
+		if c == '(' || c == ')' {
+			tokens = append(tokens, Token{Type: PARENTHESIS, Value: input[i : i+1]})
+			i++
 			continue
 		}
 
-		return nil, fmt.Errorf("unrecognized character: %c at position %d", input[i], i)
+		// Skip unrecognized character
+		i++
 	}
 
 	if err := validateTokenSequence(tokens); err != nil {
@@ -147,7 +194,7 @@ func validateTokenSequence(tokens []Token) error {
 			if i > 0 {
 				prev := tokens[i-1]
 				if prev.Type != OPERATOR && prev.Type != UNARY_OPERATOR && prev.Type != FUNCTION &&
-				   !(prev.Type == PARENTHESIS && prev.Value == "(") {
+					!(prev.Type == PARENTHESIS && prev.Value == "(") {
 					return fmt.Errorf("unary operator in invalid position after %s", prev.Value)
 				}
 			}
@@ -158,9 +205,9 @@ func validateTokenSequence(tokens []Token) error {
 			if i < len(tokens)-1 {
 				next := tokens[i+1]
 				if next.Type != NUMBER &&
-				   next.Type != UNARY_OPERATOR &&
-				   next.Type != FUNCTION &&
-				   !(next.Type == PARENTHESIS && next.Value == "(") {
+					next.Type != UNARY_OPERATOR &&
+					next.Type != FUNCTION &&
+					!(next.Type == PARENTHESIS && next.Value == "(") {
 					return fmt.Errorf("unary operator must be followed by number, function, '(', or another unary operator, got %s", next.Value)
 				}
 			}
@@ -176,9 +223,9 @@ func validateTokenSequence(tokens []Token) error {
 			if i < len(tokens)-1 {
 				next := tokens[i+1]
 				if next.Type != NUMBER &&
-				   next.Type != FUNCTION &&
-				   next.Type != UNARY_OPERATOR &&
-				   !(next.Type == PARENTHESIS && next.Value == "(") {
+					next.Type != FUNCTION &&
+					next.Type != UNARY_OPERATOR &&
+					!(next.Type == PARENTHESIS && next.Value == "(") {
 					return fmt.Errorf("function must be followed by number, function, unary operator, or '(', got %s", next.Value)
 				}
 			}
